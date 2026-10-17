@@ -3,6 +3,8 @@
 给 DeepSeek Harness 桌面版加一个右上角电源按钮：点开只有 **关闭DSH** 和 **重启DSH** 两项，省得每次改完插件/配置还要去系统托盘里翻「退出」。
 
 > Windows 专用 · 只支持 DSH Desktop · 纯本地 · 无外部依赖 · MIT
+>
+> ⭐ 如果这个小工具帮你省了点时间，欢迎点个 **Star** 支持一下，感谢～
 
 ![dsh-power-menu 菜单截图](docs/screenshot.png)
 
@@ -208,5 +210,7 @@ dsh plugin --profile desktop add github:xichen-62/dsh-power-menu
 ```
 
 or add `github:xichen-62/dsh-power-menu` in the DSH plugin manager, then restart DSH.
+
+If this saves you some time, a ⭐ **star** is much appreciated. Thanks!
 
 MIT licensed.
