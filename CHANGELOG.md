@@ -5,6 +5,13 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3] - 2026-10-18
+
+### Changed
+
+- The welcome-screen power button is now mounted inside the header icon row (`conversation.session.header.corner`) instead of being absolutely positioned. It participates in the same flex layout as the native icons, so it aligns and spaces naturally and the menu drops below it.
+- The fallback stays fully transparent (no background or shadow).
+
 ## [0.1.2] - 2026-10-18
 
 ### Changed
