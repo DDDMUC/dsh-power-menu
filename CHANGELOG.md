@@ -5,6 +5,13 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.2] - 2026-10-18
+
+### Changed
+
+- The welcome-screen fallback button is now fully transparent (no background or shadow), so custom DSH themes are not broken by a sudden colour block.
+- The fallback button aligns with the first native header icon in `conversation.session.header.corner`: vertically centred, 12px to its left.
+
 ## [0.1.1] - 2026-10-18
 
 ### Fixed
