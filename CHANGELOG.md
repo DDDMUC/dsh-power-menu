@@ -1,0 +1,25 @@
+# Changelog
+
+All notable changes to this project are documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.1.0] - 2026-10-18
+
+### Added
+
+- Power button in the DSH Desktop session header (`conversation.session.header.utilities`).
+- Windows power-menu style popover with exactly two actions:
+  - **关闭DSH** — quit the whole desktop app without relaunching.
+  - **重启DSH** — quit and relaunch the app, waiting for the old port to free first.
+- Detached helper (`lib/helper.cjs`) that ends only the Electron main process (`taskkill /F`, no `/T`) so the Host can run its own graceful shutdown and flush session logs.
+- Clean-environment relaunch with retry and a failure message box.
+- Loopback-only, same-origin-fenced HTTP routes:
+  - `POST /api/dsh-power-menu/shutdown`
+  - `POST /api/dsh-power-menu/restart`
+  - `GET /api/dsh-power-menu/health`
+- Keyboard and pointer interaction: `Esc`, `↑` / `↓` / `Home` / `End`, `Enter` / `Space`, outside click.
+- Full-page progress overlay while the app is shutting down or restarting.
+- Local diagnostics under `%USERPROFILE%\.dsh\dsh-power-menu\`.
+- Static `npm run check` validation and GitHub Actions workflow.

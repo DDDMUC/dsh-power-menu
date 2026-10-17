@@ -1,0 +1,5 @@
+# DeepSeek Harness 电源菜单：bundle patch 层。
+# 安装到 profile 后，这一行把插件挂进组合配置。
+- insert:
+    - id: dsh-power-menu
+      name: dsh-power-menu
