@@ -5,6 +5,13 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.4] - 2026-10-18
+
+### Fixed
+
+- Reverted the welcome-screen fallback to a fixed-position overlay. Mounting a foreign node inside the React-managed header made the button jump whenever the header re-rendered.
+- The fallback now sits to the left of the layout/sidebar pair (not between them). The positioning scan ignores the plugin's own menu items and trigger, so opening the menu no longer moves the button and the menu drops below it.
+
 ## [0.1.3] - 2026-10-18
 
 ### Changed
