@@ -5,6 +5,13 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - 2026-10-18
+
+### Fixed
+
+- Keep the power button visible on the no-session welcome screen: a `shell.overlay` fallback renders at the top-right when the session-header button is absent, and hides as soon as the header button is present.
+- Refresh the injected stylesheet when the client bundle reloads, so new CSS rules (such as the floating fallback) apply instead of being skipped by a stale `<style>` tag.
+
 ## [0.1.0] - 2026-10-18
 
 ### Added
