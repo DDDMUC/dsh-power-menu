@@ -5,6 +5,12 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.10] - 2026-10-18
+
+### Fixed
+
+- The default export is now the full plugin object (`name`, `inject`, `apply`) instead of the bare `apply` function. The 0.1.7 default-export fix dropped the named `inject`, so Cordis unwrapped a function without `inject` and the host failed with `cannot get property "webServer" without inject`; the client menu still opened, but every action returned HTTP 404.
+
 ## [0.1.9] - 2026-10-18
 
 ### Changed
