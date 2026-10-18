@@ -5,6 +5,16 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.9] - 2026-10-18
+
+### Changed
+
+- Removed the 0.1.8 `postinstall` auto-enable. pnpm 11 blocks dependency lifecycle scripts by default (`ERR_PNPM_IGNORED_BUILDS`), so the hook did not run and could make the install exit non-zero.
+
+### Added
+
+- `enable.ps1`: one-click append of `dsh-power-menu` to `dsh.profile.bundles` for an already-installed plugin, with a profile backup before writing.
+
 ## [0.1.8] - 2026-10-18
 
 ### Added
