@@ -5,6 +5,12 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.8] - 2026-10-18
+
+### Added
+
+- A `postinstall` hook that appends `dsh-power-menu` to `dsh.profile.bundles` when the package is installed inside a DSH profile. A fresh install now becomes usable after a restart without a separate "enable" step; link/workspace installs and non-DSH directories are left untouched. If pnpm runs with `--ignore-scripts`, the hook is skipped and the plugin still has to be enabled manually.
+
 ## [0.1.7] - 2026-10-18
 
 ### Fixed

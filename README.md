@@ -37,6 +37,8 @@ DSH Desktop 关窗口只是收进托盘，真正退出或重启要走托盘菜�
 3. 安装完成后重启一次 DSH。
 4. 在 **插件市场 → 已安装** 里确认 `dsh-power-menu` 处于「启用中」。
 
+> 0.1.8 起 `postinstall` 会尝试自动把 `dsh-power-menu` 补进 `dsh.profile.bundles`，正常安装后重启即可用。如果 pnpm 以 `--ignore-scripts` 运行，钩子会被跳过，仍需在已安装列表里手动启用一次。
+
 ### 方式 B：命令行安装
 
 ```bash
@@ -172,6 +174,9 @@ dsh-power-menu/
 
 **点了没反应？**
 看 `%USERPROFILE%\.dsh\dsh-power-menu\` 下的日志；`dsh web` 环境会返回 409（仅支持桌面版）。
+
+**装完点按钮报 `HTTP 404`？**
+说明宿主半没加载：插件只在 `dependencies` 里，不在 `dsh.profile.bundles` 里。0.1.8+ 的 `postinstall` 会自动补；如果安装时用了 `--ignore-scripts`，请在插件管理器里手动启用一次，或把 `dsh-power-menu` 加进 profile 的 `dsh.profile.bundles`，再重启 DSH。
 
 ## 卸载
 
