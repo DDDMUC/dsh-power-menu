@@ -5,6 +5,12 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.7] - 2026-10-18
+
+### Fixed
+
+- Added a default export for the host plugin (`export default apply`) while keeping the named exports. Some installers/loaders unwrap ESM through `default`, so a Git install could otherwise fail with `invalid plugin, expect function or object with an "apply" method, received object`.
+
 ## [0.1.6] - 2026-10-18
 
 ### Fixed
