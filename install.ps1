@@ -32,7 +32,7 @@ param(
   [switch]$Mirror,
   [switch]$Tarball,
   [string]$TgzPath = '',
-  [string]$Version = '0.1.12'
+  [string]$Version = '0.1.13'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -64,23 +64,35 @@ function Save-ReleaseTarball {
     return $dest
   }
 
-  $url = if ($Mirror) { "https://gh-proxy.com/$releaseUrl" } else { $releaseUrl }
-  Write-Host "[$pluginName] 正在下载安装包（不依赖 git）：$url"
-
-  try {
-    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-    $oldProgress = $ProgressPreference
-    $ProgressPreference = 'SilentlyContinue'
-    Invoke-WebRequest -Uri $url -OutFile $dest -UseBasicParsing
-    $ProgressPreference = $oldProgress
-  } catch {
-    throw "[$pluginName] 下载安装包失败：$($_.Exception.Message)`n可以改用 -Mirror 走镜像，或用 -TgzPath 指定已经拷到本机的 tgz。"
+  $urls = if ($Mirror) {
+    @("https://gh-proxy.com/$releaseUrl")
+  } else {
+    @($releaseUrl, "https://gh-proxy.com/$releaseUrl")
   }
 
-  if ((Get-Item $dest).Length -lt 10KB) {
-    throw "[$pluginName] 下载到的文件太小，可能不是安装包：$dest"
+  [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+  [Net.ServicePointManager]::CheckCertificateRevocationList = $false
+  $oldProgress = $ProgressPreference
+  $ProgressPreference = 'SilentlyContinue'
+  $lastError = $null
+
+  foreach ($url in $urls) {
+    Write-Host "[$pluginName] 正在下载安装包（不依赖 git）：$url"
+    if (Test-Path $dest) { Remove-Item $dest -Force }
+    try {
+      Invoke-WebRequest -Uri $url -OutFile $dest -UseBasicParsing
+      if ((Get-Item $dest).Length -gt 10KB) {
+        $ProgressPreference = $oldProgress
+        return $dest
+      }
+      $lastError = '下载到的文件太小，可能不是安装包'
+    } catch {
+      $lastError = $_.Exception.Message
+    }
   }
-  return $dest
+
+  $ProgressPreference = $oldProgress
+  throw "[$pluginName] 下载安装包失败：$lastError`n可以改用 -Mirror 走镜像，或用 -TgzPath 指定已经拷到本机的 tgz。"
 }
 
 $profileDir = Join-Path $env:USERPROFILE ".dsh\profiles\$Profile"

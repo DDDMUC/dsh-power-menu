@@ -5,6 +5,13 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.13] - 2026-10-19
+
+### Fixed
+
+- Release-tarball download now falls back to the gh-proxy mirror automatically when the direct GitHub download fails, and disables the Windows certificate revocation check that can abort the transfer with `CRYPT_E_NO_REVOCATION_CHECK`.
+- Tarball installs are verified to work end to end on a machine without git: `dsh plugin add <local .tgz>` and `dsh plugin add <tarball URL>` both unpack without ever invoking git.
+
 ## [0.1.12] - 2026-10-19
 
 ### Added
