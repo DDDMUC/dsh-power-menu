@@ -1,0 +1,90 @@
+﻿# dsh-power-menu 一键安装脚本
+#
+# 把 dsh-power-menu 装进 DSH Desktop 的 profile，并补齐
+# `dsh.profile.bundles`，让宿主半在重启后真正加载。
+#
+# 顺带处理两个最常见的安装问题：
+#   1. 旧的 link/junction 残留会让 pnpm 报「没有写入权限」
+#      （ERR_PNPM_EPERM: rename ... -> node_modules\dsh-power-menu），
+#      脚本会先移除链接再安装；
+#   2. 插件管理器只写 dependencies、不写 dsh.profile.bundles，
+#      装完点按钮会 404，脚本会补上。
+#
+# 用法（在解压后的目录里）：
+#   powershell -ExecutionPolicy Bypass -File .\install.ps1
+#   powershell -ExecutionPolicy Bypass -File .\install.ps1 -Profile desktop
+#   powershell -ExecutionPolicy Bypass -File .\install.ps1 -Mirror
+#       GitHub 直连慢或不通时，改用 gh-proxy 镜像。
+#
+# 装完请重启 DSH Desktop。
+
+param(
+  [string]$Profile = 'desktop',
+  [switch]$Mirror
+)
+
+$ErrorActionPreference = 'Stop'
+$pluginName = 'dsh-power-menu'
+
+function Find-DshCli {
+  $cmd = Get-Command dsh -ErrorAction SilentlyContinue
+  if ($cmd) { return $cmd.Source }
+  $candidates = @(
+    (Join-Path $env:LOCALAPPDATA 'Programs\DeepSeek Harness\resources\runtime\cli\bin\dsh.cmd'),
+    (Join-Path $env:ProgramFiles 'DeepSeek Harness\resources\runtime\cli\bin\dsh.cmd'),
+    (Join-Path $env:ProgramFiles 'DeepSeekHarness\resources\runtime\cli\bin\dsh.cmd'),
+    'D:\DeepSeekHarness\resources\runtime\cli\bin\dsh.cmd'
+  )
+  foreach ($c in $candidates) {
+    if ($c -and (Test-Path $c)) { return $c }
+  }
+  return $null
+}
+
+$profileDir = Join-Path $env:USERPROFILE ".dsh\profiles\$Profile"
+if (-not (Test-Path (Join-Path $profileDir 'package.json'))) {
+  Write-Host "[$pluginName] profile '$Profile' 还没初始化，交给 dsh CLI 创建。" -ForegroundColor Yellow
+}
+
+# 1) 清理旧的 junction（link: 安装残留），只删链接，不动源码目录
+$linkTarget = Join-Path $profileDir "node_modules\$pluginName"
+if (Test-Path $linkTarget) {
+  $item = Get-Item $linkTarget -Force
+  if ($item.LinkType -eq 'Junction') {
+    Write-Host "[$pluginName] 检测到旧的 junction 链接，正在移除（源码目录不受影响）…" -ForegroundColor Yellow
+    cmd /c rmdir "$linkTarget"
+  }
+}
+
+# 2) 找 dsh CLI 并安装
+$dshCli = Find-DshCli
+if (-not $dshCli) {
+  Write-Host "[$pluginName] 没有找到 dsh CLI。" -ForegroundColor Red
+  Write-Host "改用手动方式：在 DSH 的「插件管理器 → 添加插件」里输入" -ForegroundColor Yellow
+  Write-Host "  github:xichen-62/dsh-power-menu" -ForegroundColor Yellow
+  Write-Host "装完之后运行同目录下的 enable.ps1，再重启 DSH。" -ForegroundColor Yellow
+  exit 1
+}
+
+$spec = if ($Mirror) {
+  'git+https://gh-proxy.com/https://github.com/xichen-62/dsh-power-menu.git'
+} else {
+  'github:xichen-62/dsh-power-menu'
+}
+
+Write-Host "[$pluginName] 正在安装（$spec）…"
+& $dshCli plugin --profile $Profile add $spec
+if ($LASTEXITCODE -ne 0) {
+  throw "[$pluginName] 安装失败（退出码 $LASTEXITCODE）。`n如果提示网络问题，可以加 -Mirror 参数重试；如果看到 ERR_PNPM_EPERM，请把完整输出发到仓库 issue。"
+}
+
+# 3) 补 dsh.profile.bundles
+$enableScript = Join-Path $PSScriptRoot 'enable.ps1'
+if (Test-Path $enableScript) {
+  & $enableScript -Profile $Profile
+} else {
+  Write-Host "[$pluginName] 没找到 enable.ps1，请手动把 dsh-power-menu 加进 profile 的 dsh.profile.bundles。" -ForegroundColor Yellow
+}
+
+Write-Host ''
+Write-Host "[$pluginName] 安装完成。请重启 DSH Desktop 让插件生效。" -ForegroundColor Green

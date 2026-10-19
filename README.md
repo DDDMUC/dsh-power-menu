@@ -25,7 +25,25 @@ DSH Desktop 关窗口只是收进托盘，真正退出或重启要走托盘菜�
 
 ## 安装
 
-### 方式 A：通过 DSH 插件管理器（推荐）
+> **重要**：装完插件后，必须再运行一次 `enable.ps1`（或直接用下面的 `install.ps1`），把 `dsh-power-menu` 补进 profile 的 `dsh.profile.bundles`，然后重启 DSH。少了这一步，按钮会 404——这是 DSH 插件管理器只写 `dependencies`、不写 bundles 的已知行为，不是插件本身的问题。
+
+### 方式 A：一键脚本（推荐）
+
+从仓库下载 ZIP 或 `git clone` 后，在目录里运行：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\install.ps1
+```
+
+脚本会：清理旧的 link/junction 残留（避免 pnpm 的 `ERR_PNPM_EPERM`，界面上表现为「没有写入权限」）→ 用 DSH 自带 CLI 安装 → 补齐 `dsh.profile.bundles` → 提示重启。
+
+GitHub 直连慢或不通时，改用镜像：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\install.ps1 -Mirror
+```
+
+### 方式 B：通过 DSH 插件管理器
 
 1. 打开 DSH Desktop 的 **插件 / 插件市场**。
 2. 选择 **添加插件**，输入：
@@ -34,20 +52,26 @@ DSH Desktop 关窗口只是收进托盘，真正退出或重启要走托盘菜�
    github:xichen-62/dsh-power-menu
    ```
 
-3. 安装完成后重启一次 DSH。
-4. 在 **插件市场 → 已安装** 里确认 `dsh-power-menu` 处于「启用中」。
+3. 安装完成后，下载/克隆本仓库，运行 `enable.ps1` 补一次 bundles（这一步不能省）：
+
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File .\enable.ps1
+   ```
+
+4. 重启 DSH，并在 **插件市场 → 已安装** 里确认 `dsh-power-menu` 处于「启用中」。
 
 > 如果装完点按钮报 `HTTP 404`，说明插件只进了 `dependencies`、没进 `dsh.profile.bundles`，宿主半没加载。运行仓库里的 `enable.ps1`（右键使用 PowerShell 运行），它会先备份 profile，再把 `dsh-power-menu` 补进 `dsh.profile.bundles`；然后重启 DSH。
 
-### 方式 B：命令行安装
+### 方式 C：命令行安装
 
 ```bash
 dsh plugin --profile desktop add github:xichen-62/dsh-power-menu
+powershell -ExecutionPolicy Bypass -File .\enable.ps1
 ```
 
 > `dsh` 是 DSH 自带的 CLI；如果 PATH 里没有，请用 DSH 安装目录里的 `dsh` / `dsh.cmd`。
 
-### 方式 C：本地开发安装
+### 方式 D：本地开发安装
 
 ```bash
 git clone https://github.com/xichen-62/dsh-power-menu.git
@@ -69,6 +93,8 @@ New-Item -ItemType Junction `
 - `dsh.profile.bundles` 增加 `"dsh-power-menu"`
 
 重启 DSH 生效。这个插件没有构建步骤，改完 `lib/` 里的文件重启即可。
+
+> **注意**：`link:` 安装会在 `node_modules` 里创建 junction。之后如果改用插件管理器（`github:` 安装）升级同一个包，pnpm 的临时目录 rename 会撞上这个 junction，报 `ERR_PNPM_EPERM`，界面上显示「没有写入权限」。遇到时先删链接再重装：`cmd /c rmdir "$profileDir\node_modules\dsh-power-menu"`（只删链接，不动 clone 的源码）。
 
 ## 使用
 
@@ -178,6 +204,18 @@ dsh-power-menu/
 **装完点按钮报 `HTTP 404`？**
 说明宿主半没加载：插件只在 `dependencies` 里，不在 `dsh.profile.bundles` 里。运行仓库里的 `enable.ps1`，或手动把 `dsh-power-menu` 加进 profile 的 `dsh.profile.bundles`，再重启 DSH。0.1.9 起不再依赖 `postinstall`——pnpm 11 默认会拦截依赖的生命周期脚本，装不上钩子。
 
+**插件安装失败，提示「没有写入权限，无法安装」？**
+多半是之前用 `link:` 装过（`node_modules\dsh-power-menu` 是 junction），pnpm 升级时 rename 覆盖不了它，报 `ERR_PNPM_EPERM`，被安装器误读成权限问题。先删链接再重装：
+
+```powershell
+cmd /c rmdir "$env:USERPROFILE\.dsh\profiles\desktop\node_modules\dsh-power-menu"
+```
+
+或者直接运行 `install.ps1`，它会自动处理这一步。
+
+**GitHub 直连很慢 / 报网络错误？**
+用 `install.ps1 -Mirror`，或把安装来源换成 `https://gh-proxy.com/https://github.com/xichen-62/dsh-power-menu.git`。插件本身不联网，这只是下载阶段的网络问题。
+
 ## 卸载
 
 - 插件管理器里移除 `dsh-power-menu`，或者从 profile 的 `dependencies` / `dsh.profile.bundles` 里删掉，再删掉 `node_modules` 里的链接。
@@ -214,7 +252,7 @@ Install from GitHub:
 dsh plugin --profile desktop add github:xichen-62/dsh-power-menu
 ```
 
-or add `github:xichen-62/dsh-power-menu` in the DSH plugin manager, then restart DSH.
+or add `github:xichen-62/dsh-power-menu` in the DSH plugin manager, then run `enable.ps1` and restart DSH. The one-click `install.ps1` handles both the install and the `dsh.profile.bundles` registration, and cleans up a stale `link:` junction that would otherwise make pnpm fail with `ERR_PNPM_EPERM` ("No write permission; the plugin cannot be installed").
 
 If this saves you some time, a ⭐ **star** is much appreciated. Thanks!
 

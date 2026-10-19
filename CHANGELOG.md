@@ -5,6 +5,22 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.11] - 2026-10-19
+
+### Added
+
+- `install.ps1`: one-command install — cleans up a stale `link:` junction, installs from GitHub through the DSH CLI, registers `dsh-power-menu` in `dsh.profile.bundles`, and reminds you to restart DSH.
+- `install.ps1 -Mirror`: install through the gh-proxy mirror when GitHub is slow or unreachable from the machine.
+
+### Fixed
+
+- `enable.ps1` and `install.ps1` are saved as UTF-8 with BOM, so their Chinese console messages render correctly under Windows PowerShell 5.1 instead of turning into mojibake.
+- `enable.ps1` now warns when `node_modules\dsh-power-menu` is still a junction (the `link:` install shape) and prints the exact command to remove it before a plugin-manager upgrade — that junction is what makes pnpm fail with `ERR_PNPM_EPERM`, reported by the UI as "No write permission; the plugin cannot be installed".
+
+### Docs
+
+- README: the install section now marks the `enable.ps1` step as mandatory, adds a one-click install path, and documents the EPERM / permission error and slow-GitHub workaround.
+
 ## [0.1.10] - 2026-10-18
 
 ### Fixed
