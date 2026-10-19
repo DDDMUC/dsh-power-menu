@@ -5,6 +5,16 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.15] - 2026-10-19
+
+### Changed
+
+- Shutdown/restart now snapshots the Electron main process tree before ending it, excludes the Host subtree, and after the Host exits ends leftover non-Host children (GPU, renderers, plugin background servers). Orphaned plugin processes are cleaned without `/T`, and the normal path does not gain a fixed delay because the snapshot runs during the existing browser-acknowledgement wait.
+
+### Docs
+
+- README now states that a hard main-process exit can skip Chromium's profile flush; use the tray's Quit for the cleanest shutdown. A cooperative quit IPC (Host asks the main process to call `app.quit()`) is an upstream DSH request.
+
 ## [0.1.14] - 2026-10-19
 
 ### Added

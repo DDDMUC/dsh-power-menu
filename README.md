@@ -205,6 +205,9 @@ dsh-power-menu/
 **点了没反应？**
 看 `%USERPROFILE%\.dsh\dsh-power-menu\` 下的日志；`dsh web` 环境会返回 409（仅支持桌面版）。
 
+**关闭/重启会跳过 profile 收尾吗？**
+会有一点：插件只结束 Electron 主进程，Host 会走 `application.shutdown`，但主进程的 `before-quit` 可能被跳过，Chromium 的 Cookie / Local Storage 不保证落盘。0.1.15 起会在 Host 退出后定向清理非 Host 孤儿进程（不再留 GPU / 渲染器 / 插件后台），但追求最干净的退出请用托盘「退出」。真正的 `app.quit()` 需要 DSH 提供协作退出 IPC，插件单方面做不到。
+
 **装完点按钮报 `HTTP 404`？**
 说明宿主半没加载：插件只在 `dependencies` 里，不在 `dsh.profile.bundles` 里。运行仓库里的 `enable.ps1`，或手动把 `dsh-power-menu` 加进 profile 的 `dsh.profile.bundles`，再重启 DSH。0.1.9 起不再依赖 `postinstall`——pnpm 11 默认会拦截依赖的生命周期脚本，装不上钩子。
 
