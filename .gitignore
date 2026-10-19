@@ -1,5 +1,6 @@
 # dependencies
 node_modules/
+*.tgz
 
 # local logs / handoff files
 *.log

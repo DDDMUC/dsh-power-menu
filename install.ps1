@@ -3,6 +3,11 @@
 # 把 dsh-power-menu 装进 DSH Desktop 的 profile，并补齐
 # `dsh.profile.bundles`，让宿主半在重启后真正加载。
 #
+# 安装方式（自动选择）：
+#   - 机器上有 git：用 `github:xichen-62/dsh-power-menu`（pnpm 的 git 依赖）
+#   - 机器上没有 git：自动下载 GitHub Release 里的 .tgz，再用本地文件安装，
+#     全程不调用 git（这就是 ERR_PNPM_GIT_RESOLVE_FAILED 的解法）
+#
 # 顺带处理两个最常见的安装问题：
 #   1. 旧的 link/junction 残留会让 pnpm 报「没有写入权限」
 #      （ERR_PNPM_EPERM: rename ... -> node_modules\dsh-power-menu），
@@ -10,21 +15,29 @@
 #   2. 插件管理器只写 dependencies、不写 dsh.profile.bundles，
 #      装完点按钮会 404，脚本会补上。
 #
-# 用法（在解压后的目录里）：
+# 用法：
 #   powershell -ExecutionPolicy Bypass -File .\install.ps1
 #   powershell -ExecutionPolicy Bypass -File .\install.ps1 -Profile desktop
+#   powershell -ExecutionPolicy Bypass -File .\install.ps1 -Tarball
+#      强制走 tgz 安装（即使装了 git 也不用）
+#   powershell -ExecutionPolicy Bypass -File .\install.ps1 -TgzPath .\dsh-power-menu-0.1.12.tgz
+#      完全离线：手动指定本地 tgz
 #   powershell -ExecutionPolicy Bypass -File .\install.ps1 -Mirror
-#       GitHub 直连慢或不通时，改用 gh-proxy 镜像。
+#      GitHub 直连慢或不通时，改用 gh-proxy 镜像（git 和 tgz 都支持）
 #
 # 装完请重启 DSH Desktop。
 
 param(
   [string]$Profile = 'desktop',
-  [switch]$Mirror
+  [switch]$Mirror,
+  [switch]$Tarball,
+  [string]$TgzPath = '',
+  [string]$Version = '0.1.12'
 )
 
 $ErrorActionPreference = 'Stop'
 $pluginName = 'dsh-power-menu'
+$releaseUrl = "https://github.com/xichen-62/dsh-power-menu/releases/download/v$Version/dsh-power-menu-$Version.tgz"
 
 function Find-DshCli {
   $cmd = Get-Command dsh -ErrorAction SilentlyContinue
@@ -39,6 +52,35 @@ function Find-DshCli {
     if ($c -and (Test-Path $c)) { return $c }
   }
   return $null
+}
+
+function Save-ReleaseTarball {
+  $cacheDir = Join-Path $env:LOCALAPPDATA "$pluginName\cache"
+  New-Item -ItemType Directory -Force -Path $cacheDir | Out-Null
+  $dest = Join-Path $cacheDir "dsh-power-menu-$Version.tgz"
+
+  if ((Test-Path $dest) -and ((Get-Item $dest).Length -gt 10KB)) {
+    Write-Host "[$pluginName] 使用已下载的安装包：$dest"
+    return $dest
+  }
+
+  $url = if ($Mirror) { "https://gh-proxy.com/$releaseUrl" } else { $releaseUrl }
+  Write-Host "[$pluginName] 正在下载安装包（不依赖 git）：$url"
+
+  try {
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    $oldProgress = $ProgressPreference
+    $ProgressPreference = 'SilentlyContinue'
+    Invoke-WebRequest -Uri $url -OutFile $dest -UseBasicParsing
+    $ProgressPreference = $oldProgress
+  } catch {
+    throw "[$pluginName] 下载安装包失败：$($_.Exception.Message)`n可以改用 -Mirror 走镜像，或用 -TgzPath 指定已经拷到本机的 tgz。"
+  }
+
+  if ((Get-Item $dest).Length -lt 10KB) {
+    throw "[$pluginName] 下载到的文件太小，可能不是安装包：$dest"
+  }
+  return $dest
 }
 
 $profileDir = Join-Path $env:USERPROFILE ".dsh\profiles\$Profile"
@@ -56,7 +98,7 @@ if (Test-Path $linkTarget) {
   }
 }
 
-# 2) 找 dsh CLI 并安装
+# 2) 找 dsh CLI
 $dshCli = Find-DshCli
 if (-not $dshCli) {
   Write-Host "[$pluginName] 没有找到 dsh CLI。" -ForegroundColor Red
@@ -66,19 +108,36 @@ if (-not $dshCli) {
   exit 1
 }
 
-$spec = if ($Mirror) {
-  'git+https://gh-proxy.com/https://github.com/xichen-62/dsh-power-menu.git'
+# 3) 选择安装来源：有 git 走 git，没有 git 走 Release 里的 tgz
+$hasGit = $null -ne (Get-Command git -ErrorAction SilentlyContinue)
+$spec = $null
+
+if ($TgzPath) {
+  if (-not (Test-Path $TgzPath)) { throw "[$pluginName] 找不到指定的 tgz：$TgzPath" }
+  $resolved = (Resolve-Path $TgzPath).Path
+  $spec = "file:$resolved"
+  Write-Host "[$pluginName] 使用本地安装包：$resolved"
+} elseif ($Tarball -or -not $hasGit) {
+  if (-not $hasGit -and -not $Tarball) {
+    Write-Host "[$pluginName] 没有检测到 git，改用 Release 安装包（跳过 git 依赖解析）。" -ForegroundColor Yellow
+  }
+  $file = Save-ReleaseTarball
+  $spec = "file:$file"
 } else {
-  'github:xichen-62/dsh-power-menu'
+  $spec = if ($Mirror) {
+    'git+https://gh-proxy.com/https://github.com/xichen-62/dsh-power-menu.git'
+  } else {
+    'github:xichen-62/dsh-power-menu'
+  }
 }
 
 Write-Host "[$pluginName] 正在安装（$spec）…"
 & $dshCli plugin --profile $Profile add $spec
 if ($LASTEXITCODE -ne 0) {
-  throw "[$pluginName] 安装失败（退出码 $LASTEXITCODE）。`n如果提示网络问题，可以加 -Mirror 参数重试；如果看到 ERR_PNPM_EPERM，请把完整输出发到仓库 issue。"
+  throw "[$pluginName] 安装失败（退出码 $LASTEXITCODE）。`n如果看到 ERR_PNPM_GIT_RESOLVE_FAILED，说明这台机器没有 git：加 -Tarball 重试。`n如果提示网络问题，可以加 -Mirror 参数重试；如果看到 ERR_PNPM_EPERM，请把完整输出发到仓库 issue。"
 }
 
-# 3) 补 dsh.profile.bundles
+# 4) 补 dsh.profile.bundles
 $enableScript = Join-Path $PSScriptRoot 'enable.ps1'
 if (Test-Path $enableScript) {
   & $enableScript -Profile $Profile

@@ -5,6 +5,18 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.12] - 2026-10-19
+
+### Added
+
+- `install.ps1` now detects a missing `git` and falls back to the `.tgz` attached to the GitHub Release. pnpm resolves a `github:` spec by spawning `git` (`ERR_PNPM_GIT_RESOLVE_FAILED` when it is absent), while a local tarball is unpacked without any git involvement.
+- `install.ps1 -Tarball` forces the release-tarball path even when git is installed; `install.ps1 -TgzPath <file>` installs from a tarball copied to the machine, for fully offline setup.
+- GitHub Release now ships `dsh-power-menu-<version>.tgz`, so a machine without git can install with a single `dsh plugin add file:...` (or the tarball URL) and no build step.
+
+### Docs
+
+- README: added a "no git" install path and an `ERR_PNPM_GIT_RESOLVE_FAILED` FAQ entry, including the mirrored tarball URL for slow GitHub access.
+
 ## [0.1.11] - 2026-10-19
 
 ### Added
