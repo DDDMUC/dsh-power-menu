@@ -23,7 +23,7 @@
 #   powershell -ExecutionPolicy Bypass -File .\install.ps1 -Github
 #      坚持用 github: spec：没有 git 时先下载便携版 git（约 38 MB），
 #      并写进用户 PATH，之后插件管理器里粘贴仓库 URL 也能装
-#   powershell -ExecutionPolicy Bypass -File .\install.ps1 -TgzPath .\dsh-power-menu-0.1.13.tgz
+#   powershell -ExecutionPolicy Bypass -File .\install.ps1 -TgzPath .\dsh-power-menu-0.1.16.tgz
 #      完全离线：手动指定本地 tgz
 #   powershell -ExecutionPolicy Bypass -File .\install.ps1 -Mirror
 #      GitHub 直连慢或不通时，改用 gh-proxy 镜像（git 和 tgz 都支持）
@@ -37,7 +37,7 @@ param(
   [switch]$Github,
   [switch]$NoPathUpdate,
   [string]$TgzPath = '',
-  [string]$Version = '0.1.14'
+  [string]$Version = '0.1.16'
 )
 
 $ErrorActionPreference = 'Stop'

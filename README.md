@@ -43,7 +43,7 @@ GitHub 直连慢或不通时，改用镜像：
 powershell -ExecutionPolicy Bypass -File .\install.ps1 -Mirror
 ```
 
-> **机器上没有 git 也能装**：`install.ps1` 会先检查 `git`；没有就自动从 GitHub Release 下载 `dsh-power-menu-0.1.14.tgz`，再用本地文件安装，全程不调用 git（这正是 `ERR_PNPM_GIT_RESOLVE_FAILED` 的解法）。直连下不动会自动改走 gh-proxy 镜像；也可以用 `-TgzPath` 指定已经拷到本机的安装包，完全离线安装。
+> **机器上没有 git 也能装**：`install.ps1` 会先检查 `git`；没有就自动从 GitHub Release 下载 `dsh-power-menu-0.1.16.tgz`，再用本地文件安装，全程不调用 git（这正是 `ERR_PNPM_GIT_RESOLVE_FAILED` 的解法）。直连下不动会自动改走 gh-proxy 镜像；也可以用 `-TgzPath` 指定已经拷到本机的安装包，完全离线安装。
 >
 > 如果你就是想保留 `github:xichen-62/dsh-power-menu`（或在插件管理器里粘仓库地址）这种方式，加 `-Github`：脚本会下载一个便携版 git（约 38 MB，一次）并写进用户 PATH，之后 `github:` spec 和仓库 URL 都能正常解析，重启 DSH 后图形界面也能用。
 
@@ -202,6 +202,9 @@ dsh-power-menu/
 **重启后端口变了？**
 正常。DSH Desktop 每次启动用随机端口（`--port 0`），插件只负责拉起新实例，不假设端口不变。
 
+**DSH 装在中文路径 / 用户名含中文能用吗？**
+可以。插件不拼 `cmd` 字符串：启动用 `spawn(exe, [], { cwd })`，路径作为单个 argv 交给 Node 的 Unicode API；交接 JSON 和日志按 UTF-8 读写；helper 自带 `--pathtest`，会在“中文 + 空格”的临时目录里实测 UTF-8 读写和从中文路径启动 exe。安装脚本也按 UTF-8 BOM 保存。
+
 **点了没反应？**
 看 `%USERPROFILE%\.dsh\dsh-power-menu\` 下的日志；`dsh web` 环境会返回 409（仅支持桌面版）。
 
@@ -231,7 +234,7 @@ cmd /c rmdir "$env:USERPROFILE\.dsh\profiles\desktop\node_modules\dsh-power-menu
 - 或者直接装 tarball（pnpm 走 HTTP 下载后本地解包）：
 
   ```powershell
-  dsh plugin --profile desktop add https://github.com/xichen-62/dsh-power-menu/releases/latest/download/dsh-power-menu-0.1.14.tgz
+  dsh plugin --profile desktop add https://github.com/xichen-62/dsh-power-menu/releases/latest/download/dsh-power-menu-0.1.16.tgz
   ```
 
   GitHub 慢的话，在前面加 `https://gh-proxy.com/` 走镜像；也可以把 tgz 下载到本机后用 `dsh plugin --profile desktop add file:<路径>` 安装。

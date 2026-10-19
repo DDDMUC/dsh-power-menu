@@ -5,6 +5,12 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.16] - 2026-10-19
+
+### Fixed
+
+- Unicode / Chinese install-path hardening: the relaunch executable is normalized and validated before spawning, helper logs are written explicitly as UTF-8, and `--pathtest` now covers a UTF-8 JSON round-trip plus spawning an executable from a Chinese + space temp directory. Installer scripts already use UTF-8 BOM and `Get-Command dsh`, so a Chinese profile path is discovered normally.
+
 ## [0.1.15] - 2026-10-19
 
 ### Changed
