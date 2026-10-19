@@ -43,7 +43,9 @@ GitHub 直连慢或不通时，改用镜像：
 powershell -ExecutionPolicy Bypass -File .\install.ps1 -Mirror
 ```
 
-> **机器上没有 git 也能装**：`install.ps1` 会先检查 `git`；没有就自动从 GitHub Release 下载 `dsh-power-menu-0.1.13.tgz`，再用本地文件安装，全程不调用 git（这正是 `ERR_PNPM_GIT_RESOLVE_FAILED` 的解法）。直连下不动会自动改走 gh-proxy 镜像；也可以用 `-TgzPath` 指定已经拷到本机的安装包，完全离线安装。
+> **机器上没有 git 也能装**：`install.ps1` 会先检查 `git`；没有就自动从 GitHub Release 下载 `dsh-power-menu-0.1.14.tgz`，再用本地文件安装，全程不调用 git（这正是 `ERR_PNPM_GIT_RESOLVE_FAILED` 的解法）。直连下不动会自动改走 gh-proxy 镜像；也可以用 `-TgzPath` 指定已经拷到本机的安装包，完全离线安装。
+>
+> 如果你就是想保留 `github:xichen-62/dsh-power-menu`（或在插件管理器里粘仓库地址）这种方式，加 `-Github`：脚本会下载一个便携版 git（约 38 MB，一次）并写进用户 PATH，之后 `github:` spec 和仓库 URL 都能正常解析，重启 DSH 后图形界面也能用。
 
 ### 方式 B：通过 DSH 插件管理器
 
@@ -222,10 +224,11 @@ cmd /c rmdir "$env:USERPROFILE\.dsh\profiles\desktop\node_modules\dsh-power-menu
 这不是插件的问题：`github:` 安装是 pnpm 的 git 依赖，pnpm 必须先调起系统里的 `git` 做 `ls-remote`，没有 git 就直接失败（界面上的 `added 0` 说明一个文件都没下载）。两条路：
 
 - 跑 `install.ps1`：检测到没有 git 会自动改用 Release 里的 `.tgz`，不碰 git。
+- 想保留 `github:` spec：跑 `install.ps1 -Github`，它会下载便携版 git 并写进用户 PATH，之后 `github:` 和仓库 URL 都能装（重启 DSH 后插件管理器也生效）。
 - 或者直接装 tarball（pnpm 走 HTTP 下载后本地解包）：
 
   ```powershell
-  dsh plugin --profile desktop add https://github.com/xichen-62/dsh-power-menu/releases/latest/download/dsh-power-menu-0.1.13.tgz
+  dsh plugin --profile desktop add https://github.com/xichen-62/dsh-power-menu/releases/latest/download/dsh-power-menu-0.1.14.tgz
   ```
 
   GitHub 慢的话，在前面加 `https://gh-proxy.com/` 走镜像；也可以把 tgz 下载到本机后用 `dsh plugin --profile desktop add file:<路径>` 安装。

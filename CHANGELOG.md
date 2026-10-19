@@ -5,6 +5,13 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.14] - 2026-10-19
+
+### Added
+
+- `install.ps1 -Github`: keeps the `github:xichen-62/dsh-power-menu` spec working on a machine without git. It downloads a portable MinGit (~38 MB, one time) into `%LOCALAPPDATA%\dsh-power-menu\mingit`, prepends it for the current run, and appends it to the **user PATH** so the DSH plugin manager can resolve pasted GitHub repository URLs too. Verified with the system git hidden: `github:` install resolved and installed 0.1.13 through the portable git.
+- Portable git is configured with `http.schannelCheckRevoke=false` so GitHub fetches are not aborted by `CRYPT_E_NO_REVOCATION_CHECK`.
+
 ## [0.1.13] - 2026-10-19
 
 ### Fixed
