@@ -1,6 +1,7 @@
 # dependencies
 node_modules/
 *.tgz
+SHA256SUMS.txt
 
 # local logs / handoff files
 *.log

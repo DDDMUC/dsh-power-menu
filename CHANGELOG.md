@@ -5,6 +5,29 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.17] - 2026-10-21
+
+### Changed
+
+- The power button is back in the top-right header and also appears on the no-session welcome screen. It mounts through the root-scoped `shell.overlay`, then appends inside `[data-conversation-header-corner]` after the native sidebar toggle; a `MutationObserver` replaces the 500ms polling, and one forced header reflow after appending makes the welcome screen's native panel icon appear without manually resizing. It never registers the single-`header.corner` slot, so it cannot replace the native sidebar toggle. The mount is still DOM-dependent: a pure slot would place the button in the bottom-left sidebar footer, not at the requested top-right position.
+- The menu chooses its direction from the available viewport space: it opens upward near the bottom and to the right when the trigger is on the left.
+- Restart readiness now waits for a real main window (`waitForWindow`, 20s) instead of treating "process is alive" as success. A crash/error window (for example the "无法使用" DSH dialog) fails the restart.
+
+### Fixed
+
+- `desktopTarget` rejects `node.exe` even when `ELECTRON_RUN_AS_NODE=1` is inherited, so a plugin-spawned Node process is never mistaken for the desktop app.
+- Origin checks require a present Origin whose **host:port** matches the server; `Origin: null` and wrong-host Origins are rejected. A missing Origin is accepted again because the desktop shell may omit it (0.1.16 behavior); the loopback socket + Host checks and the documented local-process trust boundary still apply. Protocol equality is not required because the shell may use `dsh-app:`.
+- Added `--plan` / `--dryrun` to the helper and `GET /api/dsh-power-menu/plan` to inspect the target without side effects.
+- Orphan cleanup retries once after 300ms and logs any process that is still alive; it remains best effort, not a 100% guarantee.
+- `enable.ps1` edits the raw profile JSON instead of `ConvertFrom-Json | ConvertTo-Json -Depth 30`, so deep arrays are not truncated; BOM and a backup are preserved.
+- `install.ps1` writes the portable git to the user PATH only with `-WritePath`, verifies the release tarball with SHA-256 when a checksum is available, and defaults to 0.1.17.
+- Helper logs rotate to `.1` once they exceed 1 MB, so long-lived installs do not accumulate an unbounded `helper-*.log`.
+
+### Docs
+
+- README documents the top-right header position, the new `-WritePath` / `-Sha256` flags, and the remaining limits: hard exit may skip Chromium profile flush, orphan cleanup is best effort, and a cooperative quit IPC remains upstream work.
+- Known limits: the button still depends on DSH's `headerCorner` DOM, so a future upstream header rewrite can break it; there is no built-in updater; only Windows + DSH Desktop is supported.
+
 ## [0.1.16] - 2026-10-19
 
 ### Fixed

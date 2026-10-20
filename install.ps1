@@ -20,11 +20,13 @@
 #   powershell -ExecutionPolicy Bypass -File .\install.ps1 -Profile desktop
 #   powershell -ExecutionPolicy Bypass -File .\install.ps1 -Tarball
 #      强制走 tgz 安装（即使装了 git 也不用）
-#   powershell -ExecutionPolicy Bypass -File .\install.ps1 -Github
-#      坚持用 github: spec：没有 git 时先下载便携版 git（约 38 MB），
-#      并写进用户 PATH，之后插件管理器里粘贴仓库 URL 也能装
-#   powershell -ExecutionPolicy Bypass -File .\install.ps1 -TgzPath .\dsh-power-menu-0.1.16.tgz
+#   powershell -ExecutionPolicy Bypass -File .\install.ps1 -Github -WritePath
+#      坚持用 github: spec：没有 git 时先下载便携版 git（约 38 MB）；
+#      -WritePath 才会把它写进用户 PATH（默认只对本次安装生效）
+#   powershell -ExecutionPolicy Bypass -File .\install.ps1 -TgzPath .\dsh-power-menu-0.1.17.tgz
 #      完全离线：手动指定本地 tgz
+#   powershell -ExecutionPolicy Bypass -File .\install.ps1 -Sha256 <hash>
+#      手动指定安装包 SHA-256；默认会尝试 Release 的 SHA256SUMS.txt
 #   powershell -ExecutionPolicy Bypass -File .\install.ps1 -Mirror
 #      GitHub 直连慢或不通时，改用 gh-proxy 镜像（git 和 tgz 都支持）
 #
@@ -36,8 +38,10 @@ param(
   [switch]$Tarball,
   [switch]$Github,
   [switch]$NoPathUpdate,
+  [switch]$WritePath,
   [string]$TgzPath = '',
-  [string]$Version = '0.1.16'
+  [string]$Sha256 = '',
+  [string]$Version = '0.1.17'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -60,12 +64,61 @@ function Find-DshCli {
   return $null
 }
 
+function Get-FileSha256($path) {
+  return (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant()
+}
+
+function Assert-TarballChecksum($path) {
+  $expected = $Sha256.Trim().ToLowerInvariant()
+  if ($expected.StartsWith('sha256:')) { $expected = $expected.Substring(7) }
+  if ($expected -ne '') {
+    $actual = Get-FileSha256 $path
+    if ($actual -ne $expected) {
+      Remove-Item -LiteralPath $path -Force
+      throw "[$pluginName] SHA-256 不匹配：期望 $expected，实际 $actual。安装包已删除。"
+    }
+    Write-Host "[$pluginName] SHA-256 校验通过。" -ForegroundColor Green
+    return
+  }
+
+  # No explicit hash: use the Release SHA256SUMS.txt when it exists. A missing
+  # checksum file is a warning, not a silent pass.
+  $checksumUrl = "https://github.com/xichen-62/dsh-power-menu/releases/download/v$Version/SHA256SUMS.txt"
+  $sumsPath = Join-Path $env:TEMP ("dsh-power-menu-" + [guid]::NewGuid().ToString('N') + '-SHA256SUMS.txt')
+  try {
+    Invoke-WebRequest -Uri $checksumUrl -OutFile $sumsPath -UseBasicParsing
+  } catch {
+    Write-Host "[$pluginName] 没有取到 SHA256SUMS.txt，跳过自动校验；可用 -Sha256 手动指定。" -ForegroundColor Yellow
+    return
+  }
+
+  try {
+    $line = Get-Content -LiteralPath $sumsPath -Encoding UTF8 |
+      Where-Object { $_ -match "dsh-power-menu-$([regex]::Escape($Version))\.tgz" } |
+      Select-Object -First 1
+    if (-not $line) {
+      Write-Host "[$pluginName] SHA256SUMS.txt 里没有 $Version 的记录，跳过自动校验。" -ForegroundColor Yellow
+      return
+    }
+    $expectedFromFile = ($line -split '\s+')[0].ToLowerInvariant()
+    $actual = Get-FileSha256 $path
+    if ($actual -ne $expectedFromFile) {
+      Remove-Item -LiteralPath $path -Force
+      throw "[$pluginName] SHA-256 不匹配：期望 $expectedFromFile，实际 $actual。安装包已删除。"
+    }
+    Write-Host "[$pluginName] SHA-256 校验通过。" -ForegroundColor Green
+  } finally {
+    Remove-Item -LiteralPath $sumsPath -Force -ErrorAction SilentlyContinue
+  }
+}
+
 function Save-ReleaseTarball {
   $cacheDir = Join-Path $env:LOCALAPPDATA "$pluginName\cache"
   New-Item -ItemType Directory -Force -Path $cacheDir | Out-Null
   $dest = Join-Path $cacheDir "dsh-power-menu-$Version.tgz"
 
-  if ((Test-Path $dest) -and ((Get-Item $dest).Length -gt 10KB)) {
+  if ((Test-Path -LiteralPath $dest) -and ((Get-Item -LiteralPath $dest).Length -gt 10KB)) {
+    Assert-TarballChecksum $dest
     Write-Host "[$pluginName] 使用已下载的安装包：$dest"
     return $dest
   }
@@ -84,10 +137,11 @@ function Save-ReleaseTarball {
 
   foreach ($url in $urls) {
     Write-Host "[$pluginName] 正在下载安装包（不依赖 git）：$url"
-    if (Test-Path $dest) { Remove-Item $dest -Force }
+    if (Test-Path -LiteralPath $dest) { Remove-Item -LiteralPath $dest -Force }
     try {
       Invoke-WebRequest -Uri $url -OutFile $dest -UseBasicParsing
-      if ((Get-Item $dest).Length -gt 10KB) {
+      if ((Get-Item -LiteralPath $dest).Length -gt 10KB) {
+        Assert-TarballChecksum $dest
         $ProgressPreference = $oldProgress
         return $dest
       }
@@ -146,14 +200,16 @@ function Ensure-PortableGit {
   # 本次安装立刻可用
   $env:PATH = "$root\cmd;$env:PATH"
 
-  # 写进用户 PATH：插件管理器（GUI）里粘贴仓库地址也能解析 github: spec
-  if (-not $NoPathUpdate) {
+  # 写进用户 PATH 是永久副作用，默认不做；需要 GUI 里粘仓库地址时加 -WritePath。
+  if ($WritePath -and -not $NoPathUpdate) {
     $cmdDir = Join-Path $root 'cmd'
     $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
     if ($userPath -notlike "*$cmdDir*") {
       [Environment]::SetEnvironmentVariable('Path', "$cmdDir;$userPath", 'User')
       Write-Host "[$pluginName] 已把便携 git 写进用户 PATH；重启 DSH 后，插件管理器里粘贴仓库地址也能装。" -ForegroundColor Green
     }
+  } else {
+    Write-Host "[$pluginName] 便携 git 只在本次安装生效，未写用户 PATH（需要时加 -WritePath）。" -ForegroundColor Yellow
   }
 
   # 便携 git 自己关掉证书吊销检查，避免 GitHub 下载被 CRYPT_E_NO_REVOCATION_CHECK 打断
@@ -168,8 +224,8 @@ if (-not (Test-Path (Join-Path $profileDir 'package.json'))) {
 
 # 1) 清理旧的 junction（link: 安装残留），只删链接，不动源码目录
 $linkTarget = Join-Path $profileDir "node_modules\$pluginName"
-if (Test-Path $linkTarget) {
-  $item = Get-Item $linkTarget -Force
+if (Test-Path -LiteralPath $linkTarget) {
+  $item = Get-Item -LiteralPath $linkTarget -Force
   if ($item.LinkType -eq 'Junction') {
     Write-Host "[$pluginName] 检测到旧的 junction 链接，正在移除（源码目录不受影响）…" -ForegroundColor Yellow
     cmd /c rmdir "$linkTarget"
@@ -191,8 +247,9 @@ $hasGit = $null -ne (Get-Command git -ErrorAction SilentlyContinue)
 $spec = $null
 
 if ($TgzPath) {
-  if (-not (Test-Path $TgzPath)) { throw "[$pluginName] 找不到指定的 tgz：$TgzPath" }
-  $resolved = (Resolve-Path $TgzPath).Path
+  if (-not (Test-Path -LiteralPath $TgzPath)) { throw "[$pluginName] 找不到指定的 tgz：$TgzPath" }
+  $resolved = (Resolve-Path -LiteralPath $TgzPath).Path
+  Assert-TarballChecksum $resolved
   $spec = "file:$resolved"
   Write-Host "[$pluginName] 使用本地安装包：$resolved"
 } elseif ($Github) {
