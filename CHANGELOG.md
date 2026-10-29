@@ -5,6 +5,17 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - 2026-10-29
+
+### Fixed
+
+- 重启 / 关闭时把攒下来的 `dsh-auth-*` cookie 删到只剩最近 3 条。宿主每次启动都会下发一个**新名字**的 `dsh-auth-<随机>` cookie 且从不清理，cookie 又不区分端口，所有端口上的宿主共用同一批；攒到 71 条时 `Cookie` 请求头就有 16.1 KB，越过 Node 默认的 16 KB 请求头上限，桌面版启动直接报 `desktop welcome: Web authentication failed`（2026-10-29 在 macOS 上实测，Windows 是同一套 Electron + 同一个宿主，问题一致）。用电源菜单反复重启会加速触发。
+- 清理在 app 退出之后、重启之前进行，用 Electron 自带 Node 24 的 `node:sqlite`（Windows 没有 `/usr/bin/sqlite3`；只需要 DELETE，不碰 Chromium 的加密值）；只保留最近 3 条而不是全删，是为了不把同机另一个长期运行的 `dsh web`（浏览器里那个界面）当场登出。
+
+### Changed
+
+- `install.ps1` 的默认版本跟到 `0.1.1`。
+
 ## [0.1.0] - 2026-10-29
 
 首个以 `@dddmuc/dsh-power-menu-win` 名义发布的版本，与 macOS 版 [`dsh-power-menu-mac`](https://github.com/DDDMUC/dsh-power-menu-mac) 成对。包名带 `-win` 后缀、patch 的 `id` 改为 `dsh-power-menu-win`，两个包可以同时装在一个 profile 里而互不覆盖。**版本号从这里重新开始**：0.1.18 及之前属于上游 [xichen-62/dsh-power-menu](https://github.com/xichen-62/dsh-power-menu)。
