@@ -1,6 +1,6 @@
 {
-  "name": "dsh-power-menu",
-  "version": "0.1.19",
+  "name": "@dddmuc/dsh-power-menu-win",
+  "version": "0.1.0",
   "description": "给 DSH 桌面版加一个右上角电源按钮。点开是 Windows 电源菜单风格的小卡片，只有「关闭DSH」和「重启DSH」：关闭结束整个应用，重启会自动把窗口拉回来。纯本地，只监听回环地址。",
   "type": "module",
   "main": "lib/index.js",
@@ -34,15 +34,21 @@
     "windows",
     "desktop"
   ],
-  "author": "xichen-62",
+  "author": "DDDMUC",
+  "contributors": [
+    "xichen-62 (original dsh-power-menu, MIT)"
+  ],
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/xichen-62/dsh-power-menu.git"
+    "url": "git+https://github.com/DDDMUC/dsh-power-menu.git"
   },
-  "homepage": "https://github.com/xichen-62/dsh-power-menu#readme",
+  "homepage": "https://github.com/DDDMUC/dsh-power-menu#readme",
   "bugs": {
-    "url": "https://github.com/xichen-62/dsh-power-menu/issues"
+    "url": "https://github.com/DDDMUC/dsh-power-menu/issues"
   },
   "os": [
     "win32"

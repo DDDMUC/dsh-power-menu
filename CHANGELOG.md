@@ -5,6 +5,27 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0] - 2026-10-29
+
+首个以 `@dddmuc/dsh-power-menu-win` 名义发布的版本，与 macOS 版 [`dsh-power-menu-mac`](https://github.com/DDDMUC/dsh-power-menu-mac) 成对。包名带 `-win` 后缀、patch 的 `id` 改为 `dsh-power-menu-win`，两个包可以同时装在一个 profile 里而互不覆盖。**版本号从这里重新开始**：0.1.18 及之前属于上游 [xichen-62/dsh-power-menu](https://github.com/xichen-62/dsh-power-menu)。
+
+### Fixed
+
+- Opening the menu no longer focuses the first item. That item is 关闭DSH, so a stray Enter or Space right after opening could end the app. Focus now stays on the trigger button; ArrowDown / ArrowUp / Home / End still move into the menu (the trigger forwards them to the menu's key handler) and Escape still closes it.
+- The trigger re-focuses itself when the menu opens, so the keyboard path works on surfaces where clicking a button does not focus it.
+- The orphan sweep no longer ends the Host's other children (carried over from the fork's 0.1.18). Only the app's own processes are cleaned; set `DSH_POWER_MENU_KILL_HOST_CHILDREN=1` to restore the old behaviour.
+- Restart reuses the argv the current instance was started with (carried over from 0.1.18), so a home launched with `--user-data-dir` keeps that switch.
+
+### Added
+
+- Contract attributes on the menu buttons: `data-dsh-power-action="shutdown"` and `data-dsh-power-action="restart"`. `MenuItem` now forwards unknown props to the underlying `button`, so selectors and automated checks can target one action directly instead of matching on the label text.
+- `publishConfig.access: public`, so the scoped package publishes without an extra flag.
+
+### Changed
+
+- `install.ps1` / `enable.ps1` 用 `@dddmuc/dsh-power-menu-win` 作为包名写进 `dsh.profile.bundles`；文件名和缓存目录仍用短名 `dsh-power-menu-win`（scoped 名带 `@` 和 `/`，不能直接当路径）。
+- 安装脚本里的仓库地址从 `xichen-62/dsh-power-menu` 指向本 fork。
+
 ## [0.1.19] - 2026-10-29
 
 ### Fixed

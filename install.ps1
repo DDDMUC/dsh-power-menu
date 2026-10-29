@@ -1,10 +1,10 @@
-﻿# dsh-power-menu 一键安装脚本
+﻿# dsh-power-menu-win 一键安装脚本（@dddmuc/dsh-power-menu-win）
 #
-# 把 dsh-power-menu 装进 DSH Desktop 的 profile，并补齐
+# 把 @dddmuc/dsh-power-menu-win 装进 DSH Desktop 的 profile，并补齐
 # `dsh.profile.bundles`，让宿主半在重启后真正加载。
 #
 # 安装方式（自动选择）：
-#   - 机器上有 git：用 `github:xichen-62/dsh-power-menu`（pnpm 的 git 依赖）
+#   - 机器上有 git：用 `github:DDDMUC/dsh-power-menu`（pnpm 的 git 依赖）
 #   - 机器上没有 git：自动下载 GitHub Release 里的 .tgz，再用本地文件安装，
 #     全程不调用 git（这就是 ERR_PNPM_GIT_RESOLVE_FAILED 的解法）
 #
@@ -23,7 +23,7 @@
 #   powershell -ExecutionPolicy Bypass -File .\install.ps1 -Github -WritePath
 #      坚持用 github: spec：没有 git 时先下载便携版 git（约 38 MB）；
 #      -WritePath 才会把它写进用户 PATH（默认只对本次安装生效）
-#   powershell -ExecutionPolicy Bypass -File .\install.ps1 -TgzPath .\dsh-power-menu-0.1.17.tgz
+#   powershell -ExecutionPolicy Bypass -File .\install.ps1 -TgzPath .\dsh-power-menu-win-0.1.0.tgz
 #      完全离线：手动指定本地 tgz
 #   powershell -ExecutionPolicy Bypass -File .\install.ps1 -Sha256 <hash>
 #      手动指定安装包 SHA-256；默认会尝试 Release 的 SHA256SUMS.txt
@@ -41,12 +41,14 @@ param(
   [switch]$WritePath,
   [string]$TgzPath = '',
   [string]$Sha256 = '',
-  [string]$Version = '0.1.17'
+  [string]$Version = '0.1.0'
 )
 
 $ErrorActionPreference = 'Stop'
-$pluginName = 'dsh-power-menu'
-$releaseUrl = "https://github.com/xichen-62/dsh-power-menu/releases/download/v$Version/dsh-power-menu-$Version.tgz"
+$pluginName = '@dddmuc/dsh-power-menu-win'
+# 文件名/目录名用的短名：scoped 包名带 @ 和 /，不能直接当路径。
+$pluginSlug = 'dsh-power-menu-win'
+$releaseUrl = "https://github.com/DDDMUC/dsh-power-menu/releases/download/v$Version/dsh-power-menu-$Version.tgz"
 $mingitUrl = 'https://github.com/git-for-windows/git/releases/download/v2.56.0.windows.2/MinGit-2.56.0.2-64-bit.zip'
 
 function Find-DshCli {
@@ -83,8 +85,8 @@ function Assert-TarballChecksum($path) {
 
   # No explicit hash: use the Release SHA256SUMS.txt when it exists. A missing
   # checksum file is a warning, not a silent pass.
-  $checksumUrl = "https://github.com/xichen-62/dsh-power-menu/releases/download/v$Version/SHA256SUMS.txt"
-  $sumsPath = Join-Path $env:TEMP ("dsh-power-menu-" + [guid]::NewGuid().ToString('N') + '-SHA256SUMS.txt')
+  $checksumUrl = "https://github.com/DDDMUC/dsh-power-menu/releases/download/v$Version/SHA256SUMS.txt"
+  $sumsPath = Join-Path $env:TEMP ("$pluginSlug-" + [guid]::NewGuid().ToString('N') + '-SHA256SUMS.txt')
   try {
     Invoke-WebRequest -Uri $checksumUrl -OutFile $sumsPath -UseBasicParsing
   } catch {
@@ -94,7 +96,7 @@ function Assert-TarballChecksum($path) {
 
   try {
     $line = Get-Content -LiteralPath $sumsPath -Encoding UTF8 |
-      Where-Object { $_ -match "dsh-power-menu-$([regex]::Escape($Version))\.tgz" } |
+      Where-Object { $_ -match "$pluginSlug-$([regex]::Escape($Version))\.tgz" } |
       Select-Object -First 1
     if (-not $line) {
       Write-Host "[$pluginName] SHA256SUMS.txt 里没有 $Version 的记录，跳过自动校验。" -ForegroundColor Yellow
@@ -113,9 +115,9 @@ function Assert-TarballChecksum($path) {
 }
 
 function Save-ReleaseTarball {
-  $cacheDir = Join-Path $env:LOCALAPPDATA "$pluginName\cache"
+  $cacheDir = Join-Path $env:LOCALAPPDATA "$pluginSlug\cache"
   New-Item -ItemType Directory -Force -Path $cacheDir | Out-Null
-  $dest = Join-Path $cacheDir "dsh-power-menu-$Version.tgz"
+  $dest = Join-Path $cacheDir "$pluginSlug-$Version.tgz"
 
   if ((Test-Path -LiteralPath $dest) -and ((Get-Item -LiteralPath $dest).Length -gt 10KB)) {
     Assert-TarballChecksum $dest
@@ -237,7 +239,7 @@ $dshCli = Find-DshCli
 if (-not $dshCli) {
   Write-Host "[$pluginName] 没有找到 dsh CLI。" -ForegroundColor Red
   Write-Host "改用手动方式：在 DSH 的「插件管理器 → 添加插件」里输入" -ForegroundColor Yellow
-  Write-Host "  github:xichen-62/dsh-power-menu" -ForegroundColor Yellow
+  Write-Host "  github:DDDMUC/dsh-power-menu" -ForegroundColor Yellow
   Write-Host "装完之后运行同目录下的 enable.ps1，再重启 DSH。" -ForegroundColor Yellow
   exit 1
 }
@@ -255,9 +257,9 @@ if ($TgzPath) {
 } elseif ($Github) {
   if (-not $hasGit) { Ensure-PortableGit }
   $spec = if ($Mirror) {
-    'git+https://gh-proxy.com/https://github.com/xichen-62/dsh-power-menu.git'
+    'git+https://gh-proxy.com/https://github.com/DDDMUC/dsh-power-menu.git'
   } else {
-    'github:xichen-62/dsh-power-menu'
+    'github:DDDMUC/dsh-power-menu'
   }
 } elseif ($Tarball -or -not $hasGit) {
   if (-not $hasGit -and -not $Tarball) {
@@ -267,9 +269,9 @@ if ($TgzPath) {
   $spec = "file:$file"
 } else {
   $spec = if ($Mirror) {
-    'git+https://gh-proxy.com/https://github.com/xichen-62/dsh-power-menu.git'
+    'git+https://gh-proxy.com/https://github.com/DDDMUC/dsh-power-menu.git'
   } else {
-    'github:xichen-62/dsh-power-menu'
+    'github:DDDMUC/dsh-power-menu'
   }
 }
 
@@ -284,7 +286,7 @@ $enableScript = Join-Path $PSScriptRoot 'enable.ps1'
 if (Test-Path $enableScript) {
   & $enableScript -Profile $Profile
 } else {
-  Write-Host "[$pluginName] 没找到 enable.ps1，请手动把 dsh-power-menu 加进 profile 的 dsh.profile.bundles。" -ForegroundColor Yellow
+  Write-Host "[$pluginName] 没找到 enable.ps1，请手动把 $pluginName 加进 profile 的 dsh.profile.bundles。" -ForegroundColor Yellow
 }
 
 Write-Host ''

@@ -1,4 +1,6 @@
-# dsh-power-menu
+# dsh-power-menu-win
+
+> npm 包名：`@dddmuc/dsh-power-menu-win` · 与 macOS 版 [dsh-power-menu-mac](https://github.com/DDDMUC/dsh-power-menu-mac) 成对
 
 给 DeepSeek Harness 桌面版加一个右上角电源按钮：点开只有 **关闭DSH** 和 **重启DSH** 两项，省得每次改完插件/配置还要去系统托盘里翻「退出」。
 
@@ -6,7 +8,7 @@
 >
 > ⭐ 如果这个小工具帮你省了点时间，欢迎点个 **Star** 支持一下，感谢～
 
-![dsh-power-menu 菜单截图](docs/screenshot.png)
+![dsh-power-menu-win 菜单截图](docs/screenshot.png)
 
 ## 为什么做这个
 
@@ -25,7 +27,7 @@ DSH Desktop 关窗口只是收进托盘，真正退出或重启要走托盘菜�
 
 ## 安装
 
-> **重要**：装完插件后，必须再运行一次 `enable.ps1`（或直接用下面的 `install.ps1`），把 `dsh-power-menu` 补进 profile 的 `dsh.profile.bundles`，然后重启 DSH。少了这一步，按钮会 404——这是 DSH 插件管理器只写 `dependencies`、不写 bundles 的已知行为，不是插件本身的问题。
+> **重要**：装完插件后，必须再运行一次 `enable.ps1`（或直接用下面的 `install.ps1`），把 `@dddmuc/dsh-power-menu-win` 补进 profile 的 `dsh.profile.bundles`，然后重启 DSH。少了这一步，按钮会 404——这是 DSH 插件管理器只写 `dependencies`、不写 bundles 的已知行为，不是插件本身的问题。
 
 ### 方式 A：一键脚本（推荐）
 
@@ -43,7 +45,7 @@ GitHub 直连慢或不通时，改用镜像：
 powershell -ExecutionPolicy Bypass -File .\install.ps1 -Mirror
 ```
 
-> **机器上没有 git 也能装**：`install.ps1` 会先检查 `git`；没有就自动从 GitHub Release 下载 `dsh-power-menu-0.1.17.tgz`，再用本地文件安装，全程不调用 git（这正是 `ERR_PNPM_GIT_RESOLVE_FAILED` 的解法）。直连下不动会自动改走 gh-proxy 镜像；也可以用 `-TgzPath` 指定已经拷到本机的安装包，完全离线安装。
+> **机器上没有 git 也能装**：`install.ps1` 会先检查 `git`；没有就自动从 GitHub Release 下载 `dsh-power-menu-win-0.1.0.tgz`，再用本地文件安装，全程不调用 git（这正是 `ERR_PNPM_GIT_RESOLVE_FAILED` 的解法）。直连下不动会自动改走 gh-proxy 镜像；也可以用 `-TgzPath` 指定已经拷到本机的安装包，完全离线安装。
 >
 > 脚本默认**不改用户 PATH**；需要让插件管理器以后也能解析便携 git 时，加 `-Github -WritePath`。下载 tgz 会优先用 Release 的 `SHA256SUMS.txt` 校验，离线包可用 `-Sha256 <hash>` 手动校验。
 
@@ -53,7 +55,7 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1 -Mirror
 2. 选择 **添加插件**，输入：
 
    ```text
-   github:xichen-62/dsh-power-menu
+   @dddmuc/dsh-power-menu-win
    ```
 
 3. 安装完成后，下载/克隆本仓库，运行 `enable.ps1` 补一次 bundles（这一步不能省）：
@@ -62,14 +64,14 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1 -Mirror
    powershell -ExecutionPolicy Bypass -File .\enable.ps1
    ```
 
-4. 重启 DSH，并在 **插件市场 → 已安装** 里确认 `dsh-power-menu` 处于「启用中」。
+4. 重启 DSH，并在 **插件市场 → 已安装** 里确认 `@dddmuc/dsh-power-menu-win` 处于「启用中」。
 
-> 如果装完点按钮报 `HTTP 404`，说明插件只进了 `dependencies`、没进 `dsh.profile.bundles`，宿主半没加载。运行仓库里的 `enable.ps1`（右键使用 PowerShell 运行），它会先备份 profile，再把 `dsh-power-menu` 补进 `dsh.profile.bundles`；然后重启 DSH。
+> 如果装完点按钮报 `HTTP 404`，说明插件只进了 `dependencies`、没进 `dsh.profile.bundles`，宿主半没加载。运行仓库里的 `enable.ps1`（右键使用 PowerShell 运行），它会先备份 profile，再把 `@dddmuc/dsh-power-menu-win` 补进 `dsh.profile.bundles`；然后重启 DSH。
 
 ### 方式 C：命令行安装
 
 ```bash
-dsh plugin --profile desktop add github:xichen-62/dsh-power-menu
+dsh plugin --profile desktop add @dddmuc/dsh-power-menu-win
 powershell -ExecutionPolicy Bypass -File .\enable.ps1
 ```
 
@@ -78,7 +80,7 @@ powershell -ExecutionPolicy Bypass -File .\enable.ps1
 ### 方式 D：本地开发安装
 
 ```bash
-git clone https://github.com/xichen-62/dsh-power-menu.git
+git clone https://github.com/DDDMUC/dsh-power-menu.git
 ```
 
 把插件链接进 desktop profile：
@@ -86,19 +88,20 @@ git clone https://github.com/xichen-62/dsh-power-menu.git
 ```powershell
 # Windows PowerShell
 $profileDir = "$env:USERPROFILE\.dsh\profiles\desktop"
+New-Item -ItemType Directory -Force "$profileDir\node_modules\@dddmuc" | Out-Null
 New-Item -ItemType Junction `
-  -Path "$profileDir\node_modules\dsh-power-menu" `
+  -Path "$profileDir\node_modules\@dddmuc\dsh-power-menu-win" `
   -Target "<你 clone 下来的目录>"
 ```
 
 然后在 `$profileDir\package.json` 里：
 
-- `dependencies` 增加 `"dsh-power-menu": "link:<你 clone 下来的目录>"`
-- `dsh.profile.bundles` 增加 `"dsh-power-menu"`
+- `dependencies` 增加 `"@dddmuc/dsh-power-menu-win": "link:<你 clone 下来的目录>"`
+- `dsh.profile.bundles` 增加 `"@dddmuc/dsh-power-menu-win"`
 
 重启 DSH 生效。这个插件没有构建步骤，改完 `lib/` 里的文件重启即可。
 
-> **注意**：`link:` 安装会在 `node_modules` 里创建 junction。之后如果改用插件管理器（`github:` 安装）升级同一个包，pnpm 的临时目录 rename 会撞上这个 junction，报 `ERR_PNPM_EPERM`，界面上显示「没有写入权限」。遇到时先删链接再重装：`cmd /c rmdir "$profileDir\node_modules\dsh-power-menu"`（只删链接，不动 clone 的源码）。
+> **注意**：`link:` 安装会在 `node_modules` 里创建 junction。之后如果改用插件管理器（`github:` 安装）升级同一个包，pnpm 的临时目录 rename 会撞上这个 junction，报 `ERR_PNPM_EPERM`，界面上显示「没有写入权限」。遇到时先删链接再重装：`cmd /c rmdir "$profileDir\node_modules\@dddmuc\dsh-power-menu-win"`（只删链接，不动 clone 的源码）。
 
 ## 使用
 
@@ -217,7 +220,7 @@ DSH 的 `conversation.session.header.corner` 是单占用槽，已经被侧栏�
 会有一点：插件只结束 Electron 主进程，Host 会走 `application.shutdown`，但主进程的 `before-quit` 可能被跳过，Chromium 的 Cookie / Local Storage 不保证落盘。0.1.15 起会在 Host 退出后定向清理非 Host 孤儿进程（不再留 GPU / 渲染器 / 插件后台），但追求最干净的退出请用托盘「退出」。真正的 `app.quit()` 需要 DSH 提供协作退出 IPC，插件单方面做不到。
 
 **装完点按钮报 `HTTP 404`？**
-说明宿主半没加载：插件只在 `dependencies` 里，不在 `dsh.profile.bundles` 里。运行仓库里的 `enable.ps1`，或手动把 `dsh-power-menu` 加进 profile 的 `dsh.profile.bundles`，再重启 DSH。0.1.9 起不再依赖 `postinstall`——pnpm 11 默认会拦截依赖的生命周期脚本，装不上钩子。
+说明宿主半没加载：插件只在 `dependencies` 里，不在 `dsh.profile.bundles` 里。运行仓库里的 `enable.ps1`，或手动把 `@dddmuc/dsh-power-menu-win` 加进 profile 的 `dsh.profile.bundles`，再重启 DSH。0.1.9 起不再依赖 `postinstall`——pnpm 11 默认会拦截依赖的生命周期脚本，装不上钩子。
 
 **插件安装失败，提示「没有写入权限，无法安装」？**
 多半是之前用 `link:` 装过（`node_modules\dsh-power-menu` 是 junction），pnpm 升级时 rename 覆盖不了它，报 `ERR_PNPM_EPERM`，被安装器误读成权限问题。先删链接再重装：
@@ -229,7 +232,7 @@ cmd /c rmdir "$env:USERPROFILE\.dsh\profiles\desktop\node_modules\dsh-power-menu
 或者直接运行 `install.ps1`，它会自动处理这一步。
 
 **GitHub 直连很慢 / 报网络错误？**
-用 `install.ps1 -Mirror`，或把安装来源换成 `https://gh-proxy.com/https://github.com/xichen-62/dsh-power-menu.git`。插件本身不联网，这只是下载阶段的网络问题。
+用 `install.ps1 -Mirror`，或把安装来源换成 `https://gh-proxy.com/https://github.com/DDDMUC/dsh-power-menu.git`。插件本身不联网，这只是下载阶段的网络问题。
 
 **装的时候报 `ERR_PNPM_GIT_RESOLVE_FAILED` / 这台电脑没装 git？**
 这不是插件的问题：`github:` 安装是 pnpm 的 git 依赖，pnpm 必须先调起系统里的 `git` 做 `ls-remote`，没有 git 就直接失败（界面上的 `added 0` 说明一个文件都没下载）。两条路：
@@ -239,7 +242,7 @@ cmd /c rmdir "$env:USERPROFILE\.dsh\profiles\desktop\node_modules\dsh-power-menu
 - 或者直接装 tarball（pnpm 走 HTTP 下载后本地解包）：
 
   ```powershell
-  dsh plugin --profile desktop add https://github.com/xichen-62/dsh-power-menu/releases/latest/download/dsh-power-menu-0.1.17.tgz
+  dsh plugin --profile desktop add https://github.com/DDDMUC/dsh-power-menu/releases/latest/download/dsh-power-menu-win-0.1.0.tgz
   ```
 
   GitHub 慢的话，在前面加 `https://gh-proxy.com/` 走镜像；也可以把 tgz 下载到本机后用 `dsh plugin --profile desktop add file:<路径>` 安装。
@@ -256,7 +259,7 @@ cmd /c rmdir "$env:USERPROFILE\.dsh\profiles\desktop\node_modules\dsh-power-menu
 
 ## 许可证
 
-[MIT](LICENSE) © 2026 xichen-62
+[MIT](LICENSE) © 2026 暮迟（Windows 维护）· © 2026 xichen-62（原版 dsh-power-menu）
 
 ## 致谢
 
@@ -277,10 +280,10 @@ Windows only, DSH Desktop only. No telemetry, no external dependencies; the thre
 Install from GitHub:
 
 ```bash
-dsh plugin --profile desktop add github:xichen-62/dsh-power-menu
+dsh plugin --profile desktop add @dddmuc/dsh-power-menu-win
 ```
 
-or add `github:xichen-62/dsh-power-menu` in the DSH plugin manager, then run `enable.ps1` and restart DSH. The one-click `install.ps1` handles both the install and the `dsh.profile.bundles` registration, and cleans up a stale `link:` junction that would otherwise make pnpm fail with `ERR_PNPM_EPERM` ("No write permission; the plugin cannot be installed").
+or add `@dddmuc/dsh-power-menu-win` in the DSH plugin manager, then run `enable.ps1` and restart DSH. The one-click `install.ps1` handles both the install and the `dsh.profile.bundles` registration, and cleans up a stale `link:` junction that would otherwise make pnpm fail with `ERR_PNPM_EPERM` ("No write permission; the plugin cannot be installed").
 
 **No git on the machine?** The `github:` spec is a pnpm *git* dependency, so pnpm must spawn `git` and fails with `ERR_PNPM_GIT_RESOLVE_FAILED` when it is missing. `install.ps1` detects that and installs the `.tgz` attached to the GitHub Release instead (no git involved); the tarball URL can also be passed to `dsh plugin add` directly.
 

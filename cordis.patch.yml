@@ -1,5 +1,8 @@
-# DeepSeek Harness 电源菜单：bundle patch 层。
+# DeepSeek Harness 电源菜单（Windows）：bundle patch 层。
 # 安装到 profile 后，这一行把插件挂进组合配置。
+#
+# 包名带 -win 后缀，与 macOS 版（dsh-power-menu-mac）成对；两个包用不同的 id，
+# 各自只在自己的平台上加载，互不覆盖。
 - insert:
-    - id: dsh-power-menu
-      name: dsh-power-menu
+    - id: dsh-power-menu-win
+      name: '@dddmuc/dsh-power-menu-win'

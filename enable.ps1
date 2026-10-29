@@ -1,8 +1,8 @@
-﻿# dsh-power-menu 一键启用脚本
+﻿# dsh-power-menu-win 一键启用脚本（@dddmuc/dsh-power-menu-win）
 #
 # 用途：DSH 插件管理器安装后只写 dependencies，不一定会把插件加进
 # `dsh.profile.bundles`；少了这一条，宿主半不加载，点按钮就会 HTTP 404。
-# 这个脚本只做一件事：把 dsh-power-menu 补进指定 profile 的 bundles，
+# 这个脚本只做一件事：把 @dddmuc/dsh-power-menu-win 补进指定 profile 的 bundles，
 # 写之前备份 profile 的 package.json。
 #
 # 用法（在仓库目录右键“使用 PowerShell 运行”，或执行）：
@@ -15,7 +15,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$pluginName = 'dsh-power-menu'
+$pluginName = '@dddmuc/dsh-power-menu-win'
 $profileDir = Join-Path $env:USERPROFILE ".dsh\profiles\$Profile"
 $pkgPath = Join-Path $profileDir 'package.json'
 
@@ -60,7 +60,7 @@ $raw = [System.IO.File]::ReadAllText($pkgPath, [System.Text.Encoding]::UTF8)
 
 $arrayMatch = Get-BundlesMatch $raw
 
-if ($null -ne $arrayMatch -and $arrayMatch.Content -match '"dsh-power-menu"') {
+if ($null -ne $arrayMatch -and $arrayMatch.Content -match '"@dddmuc/dsh-power-menu-win"') {
   Write-Host "[$pluginName] 已经在 dsh.profile.bundles 里。" -ForegroundColor Yellow
   Write-Host "如果按钮仍然 404，请确认 dependencies 里有 $pluginName，并重启 DSH；仍不行就把 profile 的 package.json 和 cordis.yml 发出来。"
 } else {
@@ -69,22 +69,22 @@ if ($null -ne $arrayMatch -and $arrayMatch.Content -match '"dsh-power-menu"') {
   if ($null -ne $arrayMatch) {
     $trimmed = $arrayMatch.Content.Trim()
     $insert = if ($trimmed -eq '') {
-      '"dsh-power-menu"'
+      '"@dddmuc/dsh-power-menu-win"'
     } else {
-      $trimmed.TrimEnd().TrimEnd(',') + ', "dsh-power-menu"'
+      $trimmed.TrimEnd().TrimEnd(',') + ', "@dddmuc/dsh-power-menu-win"'
     }
     $newRaw = $raw.Substring(0, $arrayMatch.ContentStart) + $insert + $raw.Substring($arrayMatch.CloseIndex)
   } else {
     $profileMatch = [regex]::Match($raw, '"profile"\s*:\s*\{', 'IgnoreCase')
     if ($profileMatch.Success) {
       $pos = $profileMatch.Index + $profileMatch.Length
-      $newRaw = $raw.Substring(0, $pos) + '"bundles": ["dsh-power-menu"],' + $raw.Substring($pos)
+      $newRaw = $raw.Substring(0, $pos) + '"bundles": ["@dddmuc/dsh-power-menu-win"],' + $raw.Substring($pos)
     } else {
       throw "无法在 profile 的 package.json 里定位 dsh.profile；请手动把 $pluginName 加进 dsh.profile.bundles。"
     }
   }
 
-  $backup = "$pkgPath.bak-dsh-power-menu"
+  $backup = "$pkgPath.bak-dsh-power-menu-win"
   Copy-Item -LiteralPath $pkgPath -Destination $backup -Force
   try {
     [System.IO.File]::WriteAllText($pkgPath, $newRaw, (New-Object System.Text.UTF8Encoding($hasBom)))
