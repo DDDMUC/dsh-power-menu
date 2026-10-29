@@ -5,6 +5,17 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.19] - 2026-10-29
+
+### Fixed
+
+- Opening the menu no longer focuses the first item. That item is 关闭DSH, so a stray Enter or Space right after opening could end the app. Focus now stays on the trigger button; ArrowDown / ArrowUp / Home / End still move into the menu (the trigger forwards them to the menu's key handler) and Escape still closes it.
+- The trigger re-focuses itself when the menu opens, so the keyboard path works on surfaces where clicking a button does not focus it.
+
+### Added
+
+- Contract attributes on the menu buttons: `data-dsh-power-action="shutdown"` and `data-dsh-power-action="restart"`. `MenuItem` now forwards unknown props to the underlying `button`, so selectors and automated checks can target one action directly instead of matching on the label text.
+
 ## [0.1.18] - 2026-10-21
 
 ### Fixed
