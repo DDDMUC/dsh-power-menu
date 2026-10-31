@@ -5,6 +5,29 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.2] - 2026-10-30
+
+与 macOS 版 `dsh-power-menu-mac` 0.1.3 对齐：四项菜单、定时、配置页、提示词注入、刷新保险。
+
+### Added
+
+- **刷新**：只重载渲染层，应用和 Host 都不动。之前想刷新只能重启，而重启一次就多下发一条 `dsh-auth-<随机>` cookie。
+- **刷新的保险**：点刷新前先比对 profile 里各插件 `exports["./client"]` 的 `mtime:size`（宿主新增 `GET /api/dsh-power-menu/bundles`）。有文件变过就弹框列出改动的插件，给「重启 / 仍然刷新 / 取消」三个选择 —— DSH 的 client bundle 按 revision 发布且不可变，旧 revision 会被直接拒绝，刷新换来的是一整页「请关闭应用并重新安装」。宿主判断不了时不拦。
+- **定时**：居中弹窗，填分钟数后三选一 ——「N 分钟后关闭」「N 分钟后重启」「现在关闭，N 分钟后启动」。等待期间应用照常可用；到点前若应用被手动关掉或重启过，这条定时按 pid 比对自动作废。排定后按钮下方出现每秒跳的倒计时胶囊，右侧 × 直接取消。
+- **配置页**：插件管理页里这一行多了配置控件（`plugins.row.config`，key 为 `@dddmuc/dsh-power-menu-win#dsh-power-menu-win`），可以改默认分钟数、开关提示词注入、替换提示词正文。宿主新增 `POST /api/dsh-power-menu/config`。
+- **系统提示词注入**：告诉模型「DSH 的重启与关闭由用户自己点电源菜单」，不再询问。只在桌面宿主渲染，可在配置页关掉或换掉。
+- **按钮在所有页面都能用**：会话页仍在标题栏最右侧；面板页（插件、设置这类）挂进该页自己的 `header[data-window-drag]`；都没有时固定在窗口右上角（已让开 Windows 的窗口按钮）。
+
+### Changed
+
+- 菜单项按破坏性从小到大排：**刷新 → 重启 → 定时 → 关闭**，误触最多落到刷新。
+- 菜单收窄到约 100px，四个标签都是两个字。
+
+### Fixed
+
+- 立即操作如果 30 秒还没把应用带走（taskkill 被拒、helper 早退等），自动放开 `pending` 闩并记日志，不再让之后每一次操作都 409。
+- 定时到点确认应用还在时，用 `Get-Process` 找有主窗口的那个进程（helper 自己是同一个 exe 的 node 模式，没有主窗口，不会被算进来）。
+
 ## [0.1.1] - 2026-10-29
 
 ### Fixed

@@ -2,7 +2,7 @@
 
 > npm 包名：`@dddmuc/dsh-power-menu-win` · 与 macOS 版 [dsh-power-menu-mac](https://github.com/DDDMUC/dsh-power-menu-mac) 成对
 
-给 DeepSeek Harness 桌面版加一个右上角电源按钮：点开只有 **关闭DSH** 和 **重启DSH** 两项，省得每次改完插件/配置还要去系统托盘里翻「退出」。
+给 DeepSeek Harness 桌面版加一个右上角电源按钮：点开有 **刷新**、**重启**、**定时**、**关闭** 四项，省得每次改完插件/配置还要去系统托盘里翻「退出」——多数时候你要的只是刷新，不必重启。
 
 > Windows 专用 · 只支持 DSH Desktop · 纯本地 · 无外部依赖 · MIT
 >
@@ -12,16 +12,18 @@
 
 ## 为什么做这个
 
-DSH Desktop 关窗口只是收进托盘，真正退出或重启要走托盘菜单；而改插件、改配置之后又经常需要重启一次。这个插件把这两步搬到会话标题栏右上角：一个电源键，两项操作，点完就走。
+DSH Desktop 关窗口只是收进托盘，真正退出或重启要走托盘菜单；而改插件、改配置之后又经常需要重启一次。这个插件把它们搬到会话标题栏右上角：一个电源键，四项操作，点完就走。
 
 ## 功能
 
 - **右上角电源按钮**：位于会话标题栏图标行最右侧，顺序为「布局 / 侧栏 / 电源」。
 - **空会话也显示**：欢迎页和对话内使用同一个挂载位置，透明无底色，不会破坏主题，也不会出现两个按钮。
-- **Windows 电源菜单风格**：白色圆角卡片、悬浮阴影、左侧线性图标 + 右侧文本，只有两项，不塞多余入口。
-- **关闭DSH**：结束整个 DeepSeek Harness 桌面应用（Electron 主进程 + Host），不重新启动。
-- **重启DSH**：结束整个应用，等旧端口释放后用原可执行文件重新拉起，窗口自动回来。
-- **键盘可用**：`↑` / `↓` / `Home` / `End` 在两项间移动，`Enter` / 空格执行，`Esc` 关闭，点菜单外部也能关。
+- **Windows 电源菜单风格**：白色圆角卡片、悬浮阴影、左侧线性图标 + 右侧文本，四项按破坏性从小到大排，不塞多余入口；误触最多落到「刷新」。
+- **刷新**：只重载这一层页面，应用和 Host 都不动。**点之前会先比对插件文件**：某个 `client.js` 在你打开页面之后被改过时，刷新会让它加载失败，这时会弹框列出改动的插件，建议改走重启。
+- **重启**：结束整个应用，等旧端口释放后用原可执行文件重新拉起，窗口自动回来。
+- **定时**：点开一个居中弹窗，先填分钟数，再从三种里选一种 ——「N 分钟后关闭」（到点才关，期间照常用）、「N 分钟后重启」（到点关掉再开）、「现在关闭，N 分钟后启动」（立刻关，过一会儿自己回来）。弹窗会显示换算出的执行时刻，打开时焦点已在输入框里；有定时在等时多一行「取消已设定的定时」。排定之后**按钮正下方出现倒计时胶囊**（「3:43 后关闭」，右侧 × 直接取消），每秒跳。
+- **关闭**：结束整个 DeepSeek Harness 桌面应用（Electron 主进程 + Host），不重新启动。
+- **键盘可用**：`↑` / `↓` / `Home` / `End` 在四项间移动，`Enter` / 空格执行，`Esc` 关闭，点菜单外部也能关。
 - **执行反馈**：点击后整页盖一层半透明遮罩，显示「正在关闭DSH…」/「正在重启DSH…」。
 - **纯本地**：没有外部依赖、没有遥测；接口只监听本机回环地址，并做同源校验。
 
@@ -106,15 +108,50 @@ New-Item -ItemType Junction `
 ## 使用
 
 1. 在会话标题栏右上角点电源图标。
-2. 选择 **关闭DSH** 或 **重启DSH**。
+2. 选择 **刷新**、**重启**、**定时** 或 **关闭**。
 3. 等待遮罩出现：关闭会退出应用；重启会在几秒后把窗口拉回来。
 
 | 动作 | 结果 | 需要手动重开？ |
 | --- | --- | --- |
-| 关闭DSH | 结束整个桌面应用，不重新启动 | 是 |
-| 重启DSH | 结束应用 → 等端口释放 → 重新拉起 | 否，窗口自动回来 |
+| 刷新 | 只重载渲染层，应用与 Host 继续运行 | 否，界面自己回来 |
+| 重启 | 结束应用 → 等端口释放 → 重新拉起 → 验证窗口 | 否，窗口自动回来 |
+| N 分钟后关闭 | 什么都不做 → 到点结束应用 | 是 |
+| N 分钟后重启 | 什么都不做 → 到点结束 → 重新拉起 | 否，到点自己回来 |
+| 现在关闭，N 分钟后启动 | 立刻关闭 → 等 N 分钟 → 重新拉起 | 否，到点自己回来 |
+| 关闭 | 结束整个桌面应用，不重新启动 | 是 |
 
 > **注意**：点击即执行，没有二次确认。两个动作都会中断正在生成的回答、运行中的工具和后台任务。请在点之前保存手头的事情。
+
+## 配置
+
+**在插件管理页里改**：插件列表 → `@dddmuc/dsh-power-menu-win` → 组件行右侧的**配置**控件 → `#/panel/plugins/@dddmuc/dsh-power-menu-win#dsh-power-menu-win`。里面有分钟数、提示词开关和自定义文本框，点「保存」才写入。
+
+也可以直接改文件 `~/.dsh/dsh-power-menu/config.json`，第一次读取时会自动生成：
+
+```json
+{
+  "delayedRestartMinutes": 10,
+  "restartGuidance": true,
+  "restartGuidanceText": ""
+}
+```
+
+| 字段 | 作用 | 合法值 |
+| --- | --- | --- |
+| `delayedRestartMinutes` | 定时弹窗输入框的**默认**分钟数 | 1–1440 的整数；小数、0、负数、超过 1440、字符串一律回落 10 |
+| `restartGuidance` | 是否注入下面那段系统提示词 | 只有显式 `false` 才关；缺省或写错类型都当开 |
+| `restartGuidanceText` | 提示词正文 | 界面里预填默认那句；与默认一字不差时存为空串（＝继续跟随默认）；超过 2000 字截断 |
+
+改完**打开一次菜单**就生效，不用重启应用。
+
+### 注入的系统提示词
+
+```
+DSH 桌面应用的重启与关闭由用户自己通过界面右上角的电源菜单完成。
+不要询问用户是否需要重启或关闭 DSH，也不要主动提议这样做。
+```
+
+只在桌面宿主渲染（`dsh web` 上返回空串，整段丢弃）；范围刻意写窄到「重启/关闭 DSH」这一件事，避免压住改文件、跑命令这类该问的确认。
 
 ## 工作原理
 
@@ -199,7 +236,7 @@ dsh-power-menu/
 ## 常见问题
 
 **按钮没出现？**
-确认插件处于「启用中」，并重启过一次 DSH；按钮只出现在有会话标题栏的页面。
+确认插件处于「启用中」，并重启过一次 DSH。会话页里按钮在标题栏最右侧；面板页（插件、设置这类）挂在该页自己的页面头上；都没有时固定在窗口右上角。
 
 **插件卡片上没显示介绍？**
 本地开发（link 安装）的插件，卡片不读 `package.json` 的 `description`，需要在卡片上点「添加备注」自己填。这是 DSH 插件管理器的行为，不是插件的问题。
@@ -272,8 +309,10 @@ cmd /c rmdir "$env:USERPROFILE\.dsh\profiles\desktop\node_modules\dsh-power-menu
 
 A small DSH Desktop plugin that adds a power button to the top-right of the session header. It opens a Windows-style menu with exactly two actions:
 
-- **关闭DSH** — quit the whole desktop app (no relaunch).
-- **重启DSH** — quit and relaunch the app, so the window comes back automatically.
+- **刷新** — reload the renderer only; the app and its Host keep running. It checks the plugin bundles first and offers a restart when they changed.
+- **重启** — quit and relaunch the app, so the window comes back automatically.
+- **定时** — a modal: 关闭 / 重启 after N minutes, or quit now and come back after N. A countdown chip appears under the button.
+- **关闭** — quit the whole desktop app (no relaunch).
 
 Windows only, DSH Desktop only. No telemetry, no external dependencies; the three HTTP routes are loopback-only and same-origin fenced.
 
