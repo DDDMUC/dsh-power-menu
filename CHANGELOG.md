@@ -5,6 +5,13 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **`dsh web` 下会把启动壳当主程序杀掉**：目标识别原来只看 `ELECTRON_RUN_AS_NODE === '1'`，而 Windows 上用 CLI 起一个 `dsh web` 时 host 进程**同样**带这个变量、exe 还是 DSH 主程序——只有父进程不同（是 cmd / powershell）。点「重启」就会杀掉那个壳，而 Windows 上没有 launchd / systemd 托底，**进程再也不会回来**。现在加了 `parentIsDesktopApp()`：先看桌面版自己带的 `DSH_DESKTOP_NODE_EXECUTABLE`，再看父进程镜像是不是 cmd / powershell / node 这类壳，最后才用一次 WMI 查询比对父进程与自身 exe；查不到就保持现状（不会因为 WMI 不可用就把电源菜单整个废掉）。
+- `test/` 新增 5 条守卫用例，`npm test` 现在是「语法检查 + 单元测试」。
+
 ## [0.1.2] - 2026-10-30
 
 与 macOS 版 `dsh-power-menu-mac` 0.1.3 对齐：四项菜单、定时、配置页、提示词注入、刷新保险。

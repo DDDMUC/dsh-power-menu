@@ -59,7 +59,7 @@
   },
   "scripts": {
     "check": "node --check lib/index.js && node --check lib/client.js && node --check lib/helper.cjs && node -e \"const fs=require('node:fs'); JSON.parse(fs.readFileSync('package.json','utf8')); console.log('package.json ok')\"",
-    "test": "npm run check"
+    "test": "npm run check && node --test \"test/*.test.js\""
   },
   "dsh": {
     "bundle": {
