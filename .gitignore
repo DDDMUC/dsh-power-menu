@@ -17,3 +17,7 @@ desktop.ini
 # local env / secrets
 .env
 .env.*
+
+# local backups kept beside the source during ports
+.backup-*/
+.backup-*.cjs
