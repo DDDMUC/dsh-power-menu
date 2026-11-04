@@ -5,6 +5,12 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **`client.js` 的 loader id 用短名，Windows 桌面版每次启动都抛 `duplicate factory registration for "dsh-power-menu"`。** DSH 的 client-modules 拿 `registration.id` 当 factories 的 key、却用**包名**索引 graphRows：这个包的包名是 `@dddmuc/dsh-power-menu-win`，bundle 却注册成 `dsh-power-menu`，两边对不上，同一个 bundle 会被执行两次。现在 id 改回包名——和 `@linxin666/*` 那些带 scope 的插件一致（它们的 id 都是完整包名）。macOS / web 两个包名不带 scope，id 恰好等于包名，没有这个问题。
+
 ## [0.1.5] - 2026-11-04
 
 ### Changed
