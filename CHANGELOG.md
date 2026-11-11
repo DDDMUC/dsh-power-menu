@@ -5,6 +5,14 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-11-12
+
+### Changed
+
+- **收紧 helper 的固定等待**：`lib/index.js` 写进 handoff 的 `delayMs` 从 1200ms 降到 300ms，并让这段等待与孤儿进程快照并行（谁慢等谁）；端口确认释放后留给文件系统的固定等待从 800ms 降到 150ms；窗口探测轮询从 500ms 降到 250ms。主进程优雅退出（宿主 `application.shutdown` 刷会话日志）和新进程启动不属于插件，保持不变。
+- **README / About 把「清理旧的 `dsh-auth-*` cookie」提到最前面作为第一卖点**：Windows 与 macOS 版是同一套 Electron 和同一个宿主，71 条 → 16 KB 请求头 → 431 → `Web authentication failed` 的问题一模一样，而电源菜单让重启变便宜、反而加速了这个失败。English 段同步，并修掉「exactly two actions」的旧说法（实际是四项）。
+- README 头部加 npm 版本 / 周下载 / GitHub stars / license 四个 badge 和中英双语 Star 提示。
+
 ## [0.1.6] - 2026-11-04
 
 ### Fixed

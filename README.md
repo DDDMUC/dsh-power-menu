@@ -13,9 +13,9 @@
 
 > npm 包名：`@dddmuc/dsh-power-menu-win` · 与 macOS 版 [dsh-power-menu-mac](https://github.com/DDDMUC/dsh-power-menu-mac) 成对
 
-给 DeepSeek Harness 桌面版加一个右上角电源按钮：点开有 **刷新**、**重启**、**定时**、**关闭** 四项，省得每次改完插件/配置还要去系统托盘里翻「退出」——多数时候你要的只是刷新，不必重启。
+给 DeepSeek Harness 桌面版加一个右上角电源按钮：点开有 **刷新**、**重启**、**定时**、**关闭** 四项。**每次关闭或重启前，它自动把旧的登录 cookie 清到只剩最近三条**——DSH 每次启动都会下发一个新名字的 `dsh-auth-*` 却从不清旧的，攒到 71 条时 `Cookie` 请求头就超过 Node 默认的 16 KB 上限，宿主回 431、桌面壳报 `Web authentication failed`。电源菜单让重启变得随手可点，这个问题反而来得更快，所以清理是电源菜单不可或缺的职责。
 
-> Windows 专用 · 只支持 DSH Desktop · 纯本地 · 无外部依赖 · MIT
+> Windows 专用 · 只支持 DSH Desktop · **重启前自动清理登录 cookie** · 纯本地 · 无外部依赖 · MIT
 
 ![dsh-power-menu-win 菜单截图](docs/screenshot.png)
 
@@ -23,9 +23,12 @@
 
 DSH Desktop 关窗口只是收进托盘，真正退出或重启要走托盘菜单；而改插件、改配置之后又经常需要重启一次。这个插件把它们搬到会话标题栏右上角：一个电源键，四项操作，点完就走。
 
+清 cookie 是电源菜单自己带来的职责：以前重启要走托盘菜单，一天做不了几次；现在右上角点一下就够了，重启次数上去了，cookie 累积也就快了。这个失败可复现、会随重启次数必然出现，而且桌面壳只报一句 `Web authentication failed`，看不出跟 cookie 有关。Windows 与 macOS 版是同一套 Electron 和同一个宿主，问题一模一样。
+
 ## 功能
 
 - **右上角电源按钮**：位于会话标题栏图标行最右侧，顺序为「布局 / 侧栏 / 电源」。
+- **重启前自动清理登录 cookie，不会越用越登不上**：宿主每次启动都会下发一个**新名字**的 `dsh-auth-*` cookie，旧的一个都不清；cookie 不区分端口，所有端口上的宿主共用同一批。攒到 71 条时 `Cookie` 请求头达 16.1 KB，越过 Node 默认的 16 KB 上限，宿主回 431、桌面壳报 `Web authentication failed`。插件在应用退出后、新实例拉起前把旧的删到只剩最近三条 —— 留三条而不是全删，是为了不把同一台机器上另一个长期运行的 `dsh web` 当场登出。用 Electron 自带 Node 的 `node:sqlite` 直接删，不碰 Chromium 的加密值。
 - **空会话也显示**：欢迎页和对话内使用同一个挂载位置，透明无底色，不会破坏主题，也不会出现两个按钮。
 - **Windows 电源菜单风格**：白色圆角卡片、悬浮阴影、左侧线性图标 + 右侧文本，四项按破坏性从小到大排，不塞多余入口；误触最多落到「刷新」。
 - **刷新**：只重载这一层页面，应用和 Host 都不动。**点之前会先比对插件文件**：某个 `client.js` 在你打开页面之后被改过时，刷新会让它加载失败，这时会弹框列出改动的插件，建议改走重启。
@@ -187,11 +190,13 @@ flowchart LR
 具体步骤：
 
 1. Host 把交接信息写到 `%USERPROFILE%\.dsh\dsh-power-menu\`，用 `process.execPath` + `ELECTRON_RUN_AS_NODE=1` 启动 `lib/helper.cjs`。
-2. helper 等 1.2 秒，让 HTTP 应答先到浏览器。
+2. helper 等约 0.3 秒，让 HTTP 应答先到浏览器、遮罩画出来；孤儿进程快照与它并行跑，谁慢等谁。
 3. helper 执行 `taskkill /PID <主进程> /F`，**刻意不带 `/T`**：只结束 Electron 主进程，让 Host 子进程有机会收到 IPC 断开。
 4. Host 检测到断开后走自己的 `application.shutdown`，尽量把会话日志正常落盘。
 5. 重启模式下，helper 等旧监听端口释放，清掉 `ELECTRON_RUN_AS_NODE` / `DSH_DESKTOP_NODE_EXECUTABLE`，用原可执行文件重新拉起，并确认新进程存活；失败会重试，仍失败就弹窗提示手动打开。
 6. 关闭模式下不拉起，等 Host 自己退出。
+
+**为什么不更快**：helper 原来有三段写死的等待——等浏览器应答 1.2 秒、端口确认释放后再留 0.8 秒、窗口探测 500ms 一轮。现在改成条件等待与更细的轮询：应答约 0.3 秒（与孤儿快照并行）、端口释放后 0.15 秒、窗口轮询 250ms。剩下的时间是主进程优雅退出（宿主 `application.shutdown` 刷会话日志）和新进程起来，这两段不属于插件；`taskkill /F` 已经是最快的退出方式，但跳过优雅退出会丢日志，这里刻意不做。
 
 ### 接口
 
@@ -316,7 +321,7 @@ cmd /c rmdir "$env:USERPROFILE\.dsh\profiles\desktop\node_modules\dsh-power-menu
 
 ## English
 
-A small DSH Desktop plugin that adds a power button to the top-right of the session header. It opens a Windows-style menu with exactly two actions:
+A small DSH Desktop plugin that adds a power button to the top-right of the session header — and **before every shutdown or restart, prunes stale `dsh-auth-*` cookies down to the latest three**. DSH issues a new cookie name on every launch and never clears the old ones; at 71 cookies the request header crosses Node's 16 KB limit, the host answers 431 and the desktop shell reports `Web authentication failed`. A power button makes restarts cheap, so that failure arrives sooner; pruning those cookies is therefore an indispensable duty of the power menu. Four actions, least destructive first:
 
 - **刷新** — reload the renderer only; the app and its Host keep running. It checks the plugin bundles first and offers a restart when they changed.
 - **重启** — quit and relaunch the app, so the window comes back automatically.
