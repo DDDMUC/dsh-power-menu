@@ -1,12 +1,21 @@
 # dsh-power-menu-win
 
+<p align="center">
+  <a href="https://www.npmjs.com/package/@dddmuc/dsh-power-menu-win"><img alt="npm version" src="https://img.shields.io/npm/v/%40dddmuc%2Fdsh-power-menu-win?color=4d6bfe"></a>
+  <a href="https://www.npmjs.com/package/@dddmuc/dsh-power-menu-win"><img alt="npm downloads" src="https://img.shields.io/npm/dw/%40dddmuc%2Fdsh-power-menu-win"></a>
+  <a href="https://github.com/DDDMUC/dsh-power-menu/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/DDDMUC/dsh-power-menu?color=eac54f"></a>
+  <a href="LICENSE"><img alt="license" src="https://img.shields.io/npm/l/%40dddmuc%2Fdsh-power-menu-win"></a>
+</p>
+
+> ⭐ **如果这个项目对你有帮助，欢迎点个 Star 支持一下。**
+>
+> ⭐ **If you find this project useful, a star is appreciated.**
+
 > npm 包名：`@dddmuc/dsh-power-menu-win` · 与 macOS 版 [dsh-power-menu-mac](https://github.com/DDDMUC/dsh-power-menu-mac) 成对
 
 给 DeepSeek Harness 桌面版加一个右上角电源按钮：点开有 **刷新**、**重启**、**定时**、**关闭** 四项，省得每次改完插件/配置还要去系统托盘里翻「退出」——多数时候你要的只是刷新，不必重启。
 
 > Windows 专用 · 只支持 DSH Desktop · 纯本地 · 无外部依赖 · MIT
->
-> ⭐ 如果这个小工具帮你省了点时间，欢迎点个 **Star** 支持一下，感谢～
 
 ![dsh-power-menu-win 菜单截图](docs/screenshot.png)
 
