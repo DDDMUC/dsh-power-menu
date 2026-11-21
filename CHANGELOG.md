@@ -5,6 +5,13 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.4] - 2026-11-22
+
+### Changed
+
+- **统一按钮位置为右上角浮层**：不再挂进会话页标题栏，会话页与非会话页的电源按钮都固定在窗口右上角同一位置。
+- **缩短重启等待**：重启路径的端口释放等待从 30 秒降到 8 秒、关闭路径从 25 秒降到 8 秒，避免长时间停在重启遮罩；超时后的清理动作不变。
+
 ## [0.2.3] - 2026-11-20
 
 ### Added
