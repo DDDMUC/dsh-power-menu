@@ -5,6 +5,20 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.5] - 2026-11-22
+
+### Fixed
+
+- **重启成功不再只看「窗口出来了」**：窗口只证明 Electron 主进程活着，宿主（插件和 agent 都在里面）可能绑了端口却卡在事件循环里一个字都不回。现在窗口之后再验一次：用 `netstat -ano` 找出新实例（含 Host 子进程）监听的端口，25 秒内有任何 HTTP 应答才算完成；端口绑上了却一直沉默 → 记失败并弹窗提示退出重开。新增 `node lib/helper.cjs --hosttest <pid> [ms]` 可手动验。
+- **`/health` 加了 2 秒超时**：以前 fetch 没有超时，宿主一卡，遮罩就永远等一个不会来的回答，而 `setInterval` 还会每 2 秒叠一条永远 pending 的请求（实测堆到两百多条连接）。现在连续三次「连得上但不回话」就撤掉遮罩并说清下一步；「连不上」（宿主正常退出）仍然不打扰。
+- **定时动作的 helper 中途死了，定时不会挂在那骗人**：`scheduled` 现在随 helper 退出一起清掉，胶囊不再倒数到 0 后停在「即将执行」。
+- **helper 报成功后闩只多留 60 秒**：正常情况下一秒内本进程就该被杀掉；60 秒后还活着说明这次切换没落到本进程，继续锁着会让之后每个电源动作都回 409。
+- **`readJsonBody` 补上 `aborted` / `close`**：页面中途断开（关闭、刷新）时不再留一个永远 await 的 handler。
+
+### Changed
+
+- **`/bundles` 改成异步 fs 并行读**：这份扫描实测 350–520ms（几十个包，符号链接解析慢），同步版本每刷新一次页面就把单线程宿主按住半秒，agent 的事件循环一起停；改异步后墙钟时间差不多，但这半秒是等待而不是占用。
+
 ## [0.2.4] - 2026-11-22
 
 ### Changed
