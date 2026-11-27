@@ -215,7 +215,7 @@ GET  /api/dsh-power-menu/health
 - 没有鉴权令牌的第三方网页无法跨站触发关机/重启。
 - 只支持桌面版；`dsh web` 下接口返回 409，不会去杀别的进程。
 - 关机/重启时只清理**本应用自己的进程**（Electron 主进程的渲染/GPU/工具子进程）。宿主（`dsh` host）在 DSH 终端里被启动的其它子进程——第二个 `dsh web` 实例、dev server、构建任务——**默认不碰**；需要旧行为时设 `DSH_POWER_MENU_KILL_HOST_CHILDREN=1`。
-- 重启会沿用当前实例的启动参数（按 home 读取 `<DSH_HOME>\power-menu-relaunch-args.json`），所以用 `--user-data-dir` 启动的隔离 home 不会在重启后掉回默认 Electron profile。
+- 重启会自动带上当前实例的 `--user-data-dir`：host 在生成交接文件时（主进程还活着）从命令行读出来，随交接一起交给 helper。用这个开关隔离的 home 不会在重启后掉回默认 Electron profile，也不需要再手写配置文件。旧版本留下的 `<DSH_HOME>\power-menu-relaunch-args.json` 仍然被尊重，作为老交接文件的兼容路径。
 - 不收集任何数据，不联网，不写注册表；日志只写在本地 `%USERPROFILE%\.dsh\dsh-power-menu\`。
 
 ## 兼容性

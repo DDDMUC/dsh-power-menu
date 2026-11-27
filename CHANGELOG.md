@@ -5,6 +5,35 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.7] - 2026-11-28
+
+### Fixed
+
+- **重启不再把隔离 home 送回默认 Electron profile。** 重启时要带回实例自己的
+  `--user-data-dir`，否则用它隔离的 home 会去抢另一个 home 的单实例锁
+  （两套安装的 app name / appId 相同），`requestSingleInstanceLock()` 失败后直接
+  退出，表现为「点了重启，窗口消失，再也不回来」。
+
+  以前这一步只能靠用户手写 `<DSH_HOME>\power-menu-relaunch-args.json`：helper 是在
+  main 进程**已经被结束之后**才去读 argv 的，那时只能从文件里找；文件不存在就
+  静默返回空数组，重启后新实例丢了 `--user-data-dir`。
+
+  现在由 host 在**生成 handoff 时**（main 还活着，这是唯一可靠的时机）从 WMI 读一次
+  main 的 `CommandLine`，解析出这一个开关写进 `handoff.relaunchArgs`；helper 优先用它，
+  老 handoff 与那个 opt-in 文件继续兼容。只带走 `--user-data-dir` 一个开关，Chromium
+  追加的 `--type` / `--field-trial-handle` / `--mojo-platform-channel-handle` 一律不replay ——
+  那些句柄属于一个已经不存在的进程。
+
+- **开关的解析写成纯函数并加了测试。** `splitCommandLine()` 按 Windows 的引号规则
+  切分（`"C:\Program Files\...\DeepSeek Harness.exe"` 不会被空格切开），
+  `userDataDirFrom()` 支持 `--user-data-dir=X` 与 `--user-data-dir X` 两种写法，
+  开关后面没有值时不吞下一个开关。
+
+### Changed
+
+- helper 的日志现在会写明重启参数的来源：`from handoff` / `from <file>` /
+  `none recorded (the app will start in the default profile)`。以前丢了参数完全看不出来。
+
 ## [0.2.6] - 2026-11-28
 
 ### Fixed
